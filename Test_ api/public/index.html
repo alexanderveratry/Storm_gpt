@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Proyecto2 - OpenAI Chat</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
+    .container { max-width: 760px; margin: 0 auto; }
+    textarea { width: 100%; min-height: 120px; }
+    button { padding: 0.6rem 1rem; }
+    pre { background: #f6f8fa; padding: 1rem; overflow: auto; }
+    .row { display: flex; gap: 0.5rem; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chat con OpenAI</h1>
+    <p>Escribe un mensaje y el servidor lo enviará a la API de OpenAI.</p>
+
+    <div class="row">
+      <label for="model">Modelo</label>
+      <select id="model"></select>
+    </div>
+
+    <textarea id="message" placeholder="Tu mensaje..."></textarea>
+    <div class="row">
+      <button id="send">Enviar</button>
+      <span id="status"></span>
+    </div>
+
+    <h3>Respuesta</h3>
+    <pre id="output"></pre>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const out = $('#output');
+    const status = $('#status');
+    const modelSelect = $('#model');
+
+    async function loadModels() {
+      const fallback = ['gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4.1-mini'];
+      try {
+        const res = await fetch('/api/models');
+        const data = await res.json();
+        const models = Array.isArray(data?.models) && data.models.length ? data.models : fallback;
+        modelSelect.innerHTML = '';
+        for (const m of models) {
+          const opt = document.createElement('option');
+          opt.value = m; opt.textContent = m;
+          modelSelect.appendChild(opt);
+        }
+        // valor por defecto razonable
+        const preferred = 'gpt-5-mini';
+        if ([...modelSelect.options].some(o => o.value === preferred)) modelSelect.value = preferred;
+      } catch {
+        // Fallback estático
+        modelSelect.innerHTML = fallback.map(m => `<option value="${m}">${m}</option>`).join('');
+        modelSelect.value = 'gpt-5-mini';
+      }
+    }
+
+    loadModels();
+
+    $('#send').addEventListener('click', async () => {
+      const message = $('#message').value.trim();
+  const model = modelSelect.value;
+      if (!message) return;
+      status.textContent = 'Consultando...';
+      out.textContent = '';
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, model })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Error');
+        out.textContent = data.reply || '';
+      } catch (e) {
+        out.textContent = 'Fallo: ' + (e.message || e);
+      } finally {
+        status.textContent = '';
+      }
+    });
+  </script>
+</body>
+</html>

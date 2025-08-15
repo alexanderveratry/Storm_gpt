@@ -1,0 +1,82 @@
+# .env files (environment variables)
+.env
+.env.*
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test and coverage outputs
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+*.manifest
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Pycharm
+*.iml
+.idea/
+
+# Local env files
+*.local
+
+# VS Code settings
+.vscode/
+
+# Logs
+*.log
+
+# SQLite database files
+*.sqlite3
+*.db
+
+# Backup files
+*~
+*.bak
+*.swp
+*.tmp
+
+# Node.js dependencies
+node_modules/
