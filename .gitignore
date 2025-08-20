@@ -80,3 +80,5 @@ pip-wheel-metadata/
 
 # Node.js dependencies
 node_modules/
+
+videos_exp/
