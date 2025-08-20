@@ -1,4 +1,6 @@
 # Conversational Tree (Chat No Lineal con IA) v.1
+
+![Ejemplo](First_example.jpg)
 ## Problema a resolver: 
 A veces tengo la necesidad de seguir una conversacion con un LLM, pero partiendo de un punto previo. Y no quiero tener que eligir entre una linea u otra. Como no encontre ningun modelo que permitiera eso comenze este proyecto.
 
