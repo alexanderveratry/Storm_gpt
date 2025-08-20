@@ -345,6 +345,42 @@ class EnhancedConversationalTree extends ConversationalTree {
     super();
     this.openai = openai;
     this.isProcessing = false;
+    this.nodeViewStates = new Map(); // Track whether each node shows full content or summary
+    this.globalViewMode = 'summary'; // Global view mode: 'summary' or 'content'
+  }
+
+  // Get whether a node should show full content (true) or summary (false)
+  getNodeViewState(nodeId) {
+    return this.nodeViewStates.get(nodeId) || false; // Default to summary view
+  }
+
+  // Set whether a node should show full content or summary
+  setNodeViewState(nodeId, showFull) {
+    this.nodeViewStates.set(nodeId, showFull);
+  }
+
+  // Get the global view mode
+  getGlobalViewMode() {
+    return this.globalViewMode;
+  }
+
+  // Set the global view mode and apply to all nodes
+  setGlobalViewMode(mode) {
+    this.globalViewMode = mode;
+    const showFull = mode === 'content';
+    
+    // Apply to all existing nodes
+    this.nodes.forEach((_, nodeId) => {
+      this.nodeViewStates.set(nodeId, showFull);
+    });
+  }
+
+  // Get effective view state for a node (considering global mode)
+  getEffectiveViewState(nodeId) {
+    if (this.globalViewMode === 'content') return true;
+    if (this.globalViewMode === 'summary') return false;
+    // If individual mode, use individual node state
+    return this.getNodeViewState(nodeId);
   }
 
   async addNode(content, parentId = null, isBranch = false, isAI = false) {
@@ -696,10 +732,21 @@ class TreeRenderer {
       .attr('height', LAYOUT.label.h)
       .html((d) => {
         const full = tree.nodes.get(d.id);
-        let summary = full?.summary;
-        if (!summary) summary = full?.summaryGenerating ? '…' : truncate(full?.content ?? '', 160);
+        const showFull = tree.getEffectiveViewState(d.id);
+        
+        let displayText;
+        if (showFull) {
+          // Show full content
+          displayText = full?.content ?? '';
+        } else {
+          // Show summary
+          let summary = full?.summary;
+          if (!summary) summary = full?.summaryGenerating ? '…' : truncate(full?.content ?? '', 160);
+          displayText = summary;
+        }
+        
         return `<div xmlns="http://www.w3.org/1999/xhtml" class="label-box">
-                  <div class="summary-only">${escapeHTML(truncate(summary, 200))}</div>
+                  <div class="content-display">${escapeHTML(truncate(displayText, showFull ? 400 : 200))}</div>
                 </div>`;
       });
 
@@ -974,26 +1021,24 @@ function updateSidebar() {
     let summary = n.summary;
     if (!summary) summary = n.summaryGenerating ? 'Generando…' : truncate(n.content, 160);
 
+    // Check current view state for this node
+    const showFull = tree.getEffectiveViewState(id);
+    const toggleButtonText = showFull ? 'Show Summary' : 'Show Full';
+
     wrap.innerHTML = `
-      <div class="msg-summary" data-full="0">
-        <div class="summary-text">${escapeHTML(truncate(summary, 300))}</div>
-        <div class="full-text" hidden>${escapeHTML(n.content)}</div>
+      <div class="msg-summary" data-full="${showFull ? '1' : '0'}">
+        <div class="summary-text" ${showFull ? 'hidden' : ''}>${escapeHTML(truncate(summary, 300))}</div>
+        <div class="full-text" ${showFull ? '' : 'hidden'}>${escapeHTML(n.content)}</div>
       </div>
       <div class="message-actions">
         <button class="copy-btn" data-action="copy" data-id="${id}">Copy</button>
         <button class="branch-btn" data-action="branch" data-id="${id}">Branch</button>
         <button class="regen-btn" data-action="regen" data-id="${id}">Regen</button>
+        <button class="toggle-btn" data-action="toggle" data-id="${id}">${toggleButtonText}</button>
       </div>`;
 
     wrap.addEventListener('click', (ev) => {
       if (ev.target.closest('.message-actions')) return;
-      const box = wrap.querySelector('.msg-summary');
-      const full = box.querySelector('.full-text');
-      const isFull = box.getAttribute('data-full') === '1';
-      full.hidden = isFull;
-      box.querySelector('.summary-text').hidden = !isFull;
-      box.setAttribute('data-full', isFull ? '0' : '1');
-
       tree.currentNodeId = id;
       updateAll();
     });
@@ -1016,6 +1061,7 @@ function onChatAction(e) {
   if (action === 'copy') copyNodeContent(id, btn);
   else if (action === 'branch') branchFromNode(id);
   else if (action === 'regen') regenerateSummary(id, btn);
+  else if (action === 'toggle') toggleMessageView(id, btn);
 }
 
 async function regenerateSummary(nodeId, btn) {
@@ -1050,6 +1096,65 @@ function copyNodeContent(nodeId, btn) {
       console.error('Copy failed', err);
       alert('Copy failed');
     });
+}
+
+function toggleMessageView(nodeId, btn) {
+  // Find the message wrapper containing this button
+  const messageWrap = btn.closest('.message');
+  if (!messageWrap) return;
+  
+  const box = messageWrap.querySelector('.msg-summary');
+  const summaryText = box.querySelector('.summary-text');
+  const fullText = box.querySelector('.full-text');
+  const isFull = box.getAttribute('data-full') === '1';
+  
+  // Toggle visibility
+  if (isFull) {
+    // Currently showing full, switch to summary
+    fullText.hidden = true;
+    summaryText.hidden = false;
+    box.setAttribute('data-full', '0');
+    btn.textContent = 'Show Full';
+    tree.setNodeViewState(nodeId, false); // Set to summary view
+    // Reset global mode to allow individual control
+    tree.globalViewMode = 'individual';
+  } else {
+    // Currently showing summary, switch to full
+    summaryText.hidden = true;
+    fullText.hidden = false;
+    box.setAttribute('data-full', '1');
+    btn.textContent = 'Show Summary';
+    tree.setNodeViewState(nodeId, true); // Set to full view
+    // Reset global mode to allow individual control
+    tree.globalViewMode = 'individual';
+  }
+  
+  // Update the global button to show mixed state
+  const globalButton = document.querySelector('[data-action="change-view"]');
+  if (globalButton) {
+    globalButton.textContent = 'CHANGE VIEW (Mixed)';
+  }
+  
+  // Update the tree visualization to reflect the change
+  updateVisualization();
+}
+
+function toggleGlobalView() {
+  if (!tree) return;
+  
+  const currentMode = tree.getGlobalViewMode();
+  const newMode = currentMode === 'summary' ? 'content' : 'summary';
+  
+  tree.setGlobalViewMode(newMode);
+  
+  // Update the button text to show current state
+  const button = document.querySelector('[data-action="change-view"]');
+  if (button) {
+    button.textContent = newMode === 'summary' ? 'CHANGE VIEW (Summary)' : 'CHANGE VIEW (Content)';
+  }
+  
+  // Update all visualizations
+  updateAll();
 }
 
 function updateMemoryContext() {
@@ -1272,6 +1377,7 @@ function bindUI() {
     if (!action) return;
     if (action === 'export') exportTree();
     else if (action === 'import') importFile?.click();
+    else if (action === 'change-view') toggleGlobalView();
   });
 
   window.addEventListener('resize', debounce(updateVisualization, 150));
@@ -1281,6 +1387,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   openaiIntegration = new OpenAIIntegration();
   tree = new EnhancedConversationalTree(openaiIntegration);
   renderer = new TreeRenderer(SELECTORS.svg);
+
+  // Initialize the global view button text
+  const globalButton = document.querySelector('[data-action="change-view"]');
+  if (globalButton) {
+    globalButton.textContent = 'CHANGE VIEW (Summary)'; // Default is summary mode
+  }
 
   await tree.addNode("...Esperando", null, false, true);
   updateAll();
