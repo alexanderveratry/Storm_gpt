@@ -1064,7 +1064,7 @@ function updateSidebar() {
 
     // Check current view state for this node
     const showFull = tree.getEffectiveViewState(id);
-    const toggleButtonText = showFull ? 'Show Summary' : 'Show Full';
+    const toggleButtonText = showFull ? '🔁 View' : '🔁View';
 
     wrap.innerHTML = `
       <div class="msg-summary" data-full="${showFull ? '1' : '0'}">
@@ -1073,7 +1073,6 @@ function updateSidebar() {
       </div>
       <div class="message-actions">
         <button class="copy-btn" data-action="copy" data-id="${id}">Copy</button>
-        <button class="branch-btn" data-action="branch" data-id="${id}">Branch</button>
         <button class="regen-btn" data-action="regen" data-id="${id}">Regen</button>
         <button class="toggle-btn" data-action="toggle" data-id="${id}">${toggleButtonText}</button>
       </div>`;
@@ -1100,7 +1099,6 @@ function onChatAction(e) {
   e.stopPropagation();
 
   if (action === 'copy') copyNodeContent(id, btn);
-  else if (action === 'branch') branchFromNode(id);
   else if (action === 'regen') regenerateSummary(id, btn);
   else if (action === 'toggle') toggleMessageView(id, btn);
 }
@@ -1155,7 +1153,7 @@ function toggleMessageView(nodeId, btn) {
     fullText.hidden = true;
     summaryText.hidden = false;
     box.setAttribute('data-full', '0');
-    btn.textContent = 'Show Full';
+    btn.textContent = 'View';
     tree.setNodeViewState(nodeId, false); // Set to summary view
     // Reset global mode to allow individual control
     tree.globalViewMode = 'individual';
@@ -1217,35 +1215,6 @@ function updateMemoryContext() {
  * Branching & Info
  * ------------------------------------------------------------------------------*/
 
-async function branchFromNode(nodeId) {
-  const content = prompt('Enter new branch message:');
-  if (!content) return;
-
-  const node = tree.nodes.get(nodeId);
-  let parentId = nodeId;
-
-  if (node) {
-    const role = node.role ?? (node.isAI ? 'assistant' : 'user');
-
-    if (role === 'assistant') {
-      parentId = node.id;
-    } else {
-      const aId = (node.children ?? []).find((cid) => tree.nodes.get(cid)?.role === 'assistant');
-      if (aId) {
-        parentId = aId;
-      } else {
-        tree.currentNodeId = node.id;
-        await tree.generateAIResponse();
-        const anew = (node.children ?? []).find((cid) => tree.nodes.get(cid)?.role === 'assistant');
-        parentId = anew || node.parentId || node.id;
-      }
-    }
-  }
-
-  await tree.addNode(content, parentId, true);
-  updateAll();
-}
-
 function showNodeInfo(nodeData) {
   const panel = document.querySelector(SELECTORS.infoPanel);
   const info = document.querySelector(SELECTORS.nodeInfo);
@@ -1254,10 +1223,7 @@ function showNodeInfo(nodeData) {
 
   const node = tree.nodes.get(nodeData.id);
   info.innerHTML = `
-    <p><strong>Content:</strong> ${escapeHTML(node.content)}</p>
-    <p><strong>Importance:</strong> ${(node.importance * 100).toFixed(1)}%</p>
-    <p><strong>Children:</strong> ${node.children.length}</p>
-    <p><strong>Created:</strong> ${node.timestamp.toLocaleTimeString()}</p>`;
+    <div class="node-content-display">${escapeHTML(node.content)}</div>`;
   
   // Store the originating element for focus return
   panel.dataset.originatingNodeId = nodeData.id;
@@ -1476,7 +1442,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     globalButton.textContent = 'CHANGE VIEW (Summary)'; // Default is summary mode
   }
 
-  await tree.addNode("...Esperando", null, false, true);
+  await tree.addNode("", null, false, true);
   updateAll();
 
   bindUI();

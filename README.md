@@ -9,6 +9,14 @@ Facilitar la interacción con modelos de LLM a través de la fragmentación en r
 - Node.js (versión recomendada: >= 18.x)
 - npm (incluido con Node.js)
 
+## Librerías principales utilizadas
+
+- **openai**: Para la integración con modelos de lenguaje de OpenAI
+- **express**: Framework web para Node.js
+- **dotenv**: Para la gestión de variables de entorno
+- **cors**: Para el manejo de CORS (Cross-Origin Resource Sharing)
+- **nodemon**: Para el desarrollo (reinicio automático del servidor)
+
 ## Estructura del proyecto
 
 - `Test_ api/`: Carpeta para pruebas, permite verificar que la API funciona correctamente.
@@ -35,3 +43,11 @@ Facilitar la interacción con modelos de LLM a través de la fragmentación en r
 
 ## Overview general
 Storm_gpt es una plataforma diseñada para mejorar la experiencia de interacción con modelos de lenguaje (LLM), permitiendo gestionar conversaciones ramificadas y visualizarlas de forma interactiva. Ofrece herramientas para resumir, extraer palabras clave y enriquecer las conversaciones con elementos visuales y multimedia, facilitando así el análisis y la comprensión de los diálogos generados.
+
+## Demos
+
+### Demo 1 - Interfaz Principal
+![Demo 1](demo_1.jpg)
+
+### Demo 2 - Funcionalidades Avanzadas
+![Demo 2](demo_2.jpg)
