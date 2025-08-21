@@ -3,6 +3,8 @@
 ## Objetivo
 Facilitar la interacción con modelos de LLM a través de la fragmentación en ramas de las conversaciones, incluyendo visualización interactiva con resúmenes, palabras clave, emojis, imágenes, stickers, gifs u otros elementos multimedia.
 
+Permitiendo al Usuario manejar el contexto, profundizar en diversas tematicas y manejar el o los modelos a utilizar. 
+
 
 ## Requisitos necesarios
 
