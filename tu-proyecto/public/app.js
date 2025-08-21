@@ -707,6 +707,8 @@ class TreeRenderer {
       .data(data.nodes)
       .join('g')
       .attr('class', 'node-wrap')
+      .attr('data-node-id', (d) => d.id)
+      .attr('tabindex', 0)
       .call(
         d3
           .drag()
@@ -729,6 +731,14 @@ class TreeRenderer {
         tree.currentNodeId = d.id;
         updateAll(); // no view reset/recenter
         showNodeInfo(d);
+      })
+      .on('keydown', (ev, d) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          tree.currentNodeId = d.id;
+          updateAll();
+          showNodeInfo(d);
+        }
       })
       // removed dblclick reset
       .on('mouseover', (ev, d) => this._showTooltip(ev, d))
@@ -1239,7 +1249,8 @@ async function branchFromNode(nodeId) {
 function showNodeInfo(nodeData) {
   const panel = document.querySelector(SELECTORS.infoPanel);
   const info = document.querySelector(SELECTORS.nodeInfo);
-  if (!panel || !info) return;
+  const closeBtn = document.querySelector('#closeInfoPanel');
+  if (!panel || !info || !closeBtn) return;
 
   const node = tree.nodes.get(nodeData.id);
   info.innerHTML = `
@@ -1247,11 +1258,37 @@ function showNodeInfo(nodeData) {
     <p><strong>Importance:</strong> ${(node.importance * 100).toFixed(1)}%</p>
     <p><strong>Children:</strong> ${node.children.length}</p>
     <p><strong>Created:</strong> ${node.timestamp.toLocaleTimeString()}</p>`;
+  
+  // Store the originating element for focus return
+  panel.dataset.originatingNodeId = nodeData.id;
+  
+  // Show panel and update accessibility
   panel.hidden = false;
+  panel.setAttribute('aria-hidden', 'false');
+  
+  // Move focus to the close button
+  closeBtn.focus();
+}
 
-  setTimeout(() => {
-    panel.hidden = true;
-  }, 3000);
+function closeNodeInfo() {
+  const panel = document.querySelector(SELECTORS.infoPanel);
+  if (!panel) return;
+
+  // Hide panel and update accessibility
+  panel.hidden = true;
+  panel.setAttribute('aria-hidden', 'true');
+  
+  // Return focus to the originating node if possible
+  const originatingNodeId = panel.dataset.originatingNodeId;
+  if (originatingNodeId) {
+    // Find the node element in the visualization and focus it
+    const nodeElement = document.querySelector(`g.node-wrap[data-node-id="${originatingNodeId}"]`);
+    if (nodeElement && nodeElement.tabIndex !== undefined) {
+      nodeElement.focus();
+    }
+    // Clear the stored reference
+    delete panel.dataset.originatingNodeId;
+  }
 }
 
 /* --------------------------------------------------------------------------------
@@ -1388,6 +1425,7 @@ function bindUI() {
   const input = document.querySelector(SELECTORS.messageInput);
   const importFile = document.querySelector(SELECTORS.importFile);
   const controls = document.querySelector(SELECTORS.controls);
+  const closeInfoBtn = document.querySelector('#closeInfoPanel');
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1399,6 +1437,19 @@ function bindUI() {
   });
 
   importFile?.addEventListener('change', onImportFile);
+
+  // Close button for info panel
+  closeInfoBtn?.addEventListener('click', closeNodeInfo);
+
+  // Keyboard support for closing info panel with Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const panel = document.querySelector(SELECTORS.infoPanel);
+      if (panel && !panel.hidden) {
+        closeNodeInfo();
+      }
+    }
+  });
 
   // removed "reset-view" action by request
   controls?.addEventListener('click', (e) => {

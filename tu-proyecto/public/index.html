@@ -43,8 +43,11 @@
                 <input type="file" id="importFile" accept="application/json" hidden />
             </div>
             <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
-            <div class="info-panel" id="infoPanel" hidden aria-live="polite">
-                <h2>Node Info</h2>
+            <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
+                <div class="info-panel-header">
+                    <h2>Node Info</h2>
+                    <button type="button" class="close-btn" id="closeInfoPanel" aria-label="Close node info panel">✕</button>
+                </div>
                 <div id="nodeInfo"></div>
             </div>
         </main>

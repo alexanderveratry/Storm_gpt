@@ -60,6 +60,10 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .tooltip { position:fixed; pointer-events:none; background:rgba(30,40,60,0.98); border:1px solid var(--color-border); color:var(--color-text); padding:8px 10px; border-radius: var(--radius-lg); max-width:380px; font-size:12px; line-height:1.4; z-index:1000; box-shadow:0 6px 18px rgba(0,0,0,0.35); display:none; white-space:normal; word-wrap:break-word; }
 
 .info-panel { position:absolute; bottom:20px; left:20px; background:rgba(35,43,56,0.96); color:var(--color-text); padding:15px; border-radius: var(--radius-lg); max-width:320px; backdrop-filter:blur(10px); font-size:0.95rem; }
+.info-panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.info-panel-header h2 { margin:0; font-size:1.1rem; }
+.close-btn { background:none; border:none; color:var(--color-text); font-size:1.2rem; cursor:pointer; padding:4px; line-height:1; border-radius:var(--radius-sm); }
+.close-btn:hover, .close-btn:focus { background:rgba(255,255,255,0.1); outline:2px solid var(--color-accent); }
 
 /* D3 Node Styles */
 .node { fill: var(--color-accent-alt); stroke: var(--color-accent); stroke-width:2; cursor:pointer; transition: all 0.3s; }
