@@ -430,45 +430,70 @@ class EnhancedConversationalTree extends ConversationalTree {
     const wordCount = (node.content || '').trim().split(/\s+/).filter(word => word.length > 0).length; 
     if (wordCount < 5) { 
       node.summary = node.content; 
+      console.log('📝 Skipping summary for short content:', node.content.substring(0, 50));
       return; 
     } 
  
     node.summaryGenerating = true; 
+    console.log('📝 Starting summary generation for node:', nodeId);
+    console.log('📝 Content to summarize:', node.content.substring(0, 100) + '...');
  
     try { 
-      // Realiza una petición HTTP POST a la API de chat para generar un resumen
-      // Esta llamada envía el contenido del nodo a la IA para que lo resuma
-      const r = await fetch('/api/chat', { 
+      // Use the new /api/summary endpoint that supports OpenAI responses API format
+      const requestBody = {
+        "model": "gpt-5-nano",
+        "input": [
+          {
+            "role": "developer",
+            "content": [
+              {
+                "type": "input_text",
+                "text": ` Ignora reiteraciones sobre un mismo asunto y limítate solo a las ideas principales. Devuelve solo conceptos claves. La respuesta no puede ser mayor que el input.\n\n\n\n${node.content}`
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "text"
+          },
+          "verbosity": "low"
+        },
+        "reasoning": {
+          "effort": "minimal"
+        },
+        "tools": [],
+        "store": false
+      };
+
+      console.log('🚀 Sending summary request to /api/summary');
+      console.log('📤 Request body structure:', {
+        model: requestBody.model,
+        inputLength: requestBody.input[0].content[0].text.length,
+        verbosity: requestBody.text.verbosity
+      });
+
+      const r = await fetch('/api/summary', { 
         method: 'POST', // Método HTTP POST para enviar datos
         headers: { 'Content-Type': 'application/json' }, // Especifica que enviamos JSON
-        body: JSON.stringify({
-          "model": "gpt-5-nano",
-          "input": [
-            {
-              "role": "developer",
-              "content": [
-                {
-                  "type": "input_text",
-                  "text": ` Ignora reiteraciones sobre un mismo asunto y limítate solo a las ideas principales. Devuelve solo conceptos claves. La respuesta no puede ser mayor que el input.\n\n\n\n${node.content}`
-                }
-              ]
-            }
-          ],
-          "text": {
-            "format": {
-              "type": "text"
-            },
-            "verbosity": "low"
-          },
-          "reasoning": {
-            "effort": "minimal"
-          },
-          "tools": [],
-          "store": false
-        }), 
+        body: JSON.stringify(requestBody), 
       }); 
-      if (!r.ok) throw new Error(String(r.status)); 
+
+      console.log('📥 Summary API response status:', r.status, r.ok ? 'OK' : 'ERROR');
+      
+      if (!r.ok) {
+        const errorText = await r.text();
+        console.error('❌ Summary API error response:', errorText);
+        throw new Error(String(r.status));
+      }
+
       const data = await r.json(); 
+      console.log('✅ Summary API response received:', {
+        contentLength: data?.content?.length || 0,
+        hasUsage: !!data?.usage
+      });
+      console.log('📄 Summary content preview:', data?.content?.substring(0, 100) + '...');
+
       const n = this.nodes.get(nodeId); 
       if (n) { 
         let summary = data?.content || '';
@@ -487,6 +512,7 @@ class EnhancedConversationalTree extends ConversationalTree {
           // Rejoin and set summary
           summary = keywords.join(', ');
           n.keywords = keywords;
+          console.log('🔤 Generated keywords:', keywords);
         }
         
         // Fallback: generate shorter summary from content
@@ -494,11 +520,14 @@ class EnhancedConversationalTree extends ConversationalTree {
           const words = n.content.trim().split(/\s+/).slice(0, 8); // Max 8 words
           summary = words.join(' ') + (n.content.trim().split(/\s+/).length > 8 ? '...' : '');
           n.keywords = words.filter(w => w.length > 3); // Only meaningful words
+          console.log('🔄 Using fallback summary:', summary);
         }
         
         n.summary = summary;
+        console.log('✅ Summary saved for node:', nodeId, '→', summary);
       } 
     } catch (e) { 
+      console.error('❌ Summary generation error for node:', nodeId, e);
       const n = this.nodes.get(nodeId); 
       if (n && !n.summary) {
         // Better fallback: extract first few meaningful words
@@ -507,6 +536,7 @@ class EnhancedConversationalTree extends ConversationalTree {
           .slice(0, 6); // Max 6 meaningful words
         n.summary = words.join(' ') + (n.content.trim().split(/\s+/).length > 6 ? '...' : '');
         n.keywords = words;
+        console.log('🔄 Using error fallback summary:', n.summary);
       }
       console.warn('Summarize error', e); 
     } finally { 
@@ -514,6 +544,7 @@ class EnhancedConversationalTree extends ConversationalTree {
       if (n3) delete n3.summaryGenerating; 
       updateVisualization(); 
       updateSidebar(); 
+      console.log('🏁 Summary generation completed for node:', nodeId);
     } 
   }
 

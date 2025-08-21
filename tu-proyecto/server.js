@@ -79,6 +79,101 @@ app.post('/api/embeddings', async (req, res) => {
   }
 });
 
+// New endpoint for summary generation using OpenAI responses API
+app.post('/api/summary', async (req, res) => {
+  try {
+    console.log('📝 Summary API called');
+    console.log('Request body structure:', JSON.stringify(req.body, null, 2));
+    console.log('Summary API called with:', { 
+      inputLength: req.body?.input?.[0]?.content?.[0]?.text?.length,
+      model: req.body?.model,
+      verbosity: req.body?.text?.verbosity,
+      mockMode: MOCK
+    });
+    
+    const { model = 'gpt-5-nano', input, text, reasoning, tools, store } = req.body || {};
+
+    // Validate input
+    if (!input || !Array.isArray(input) || input.length === 0) {
+      console.error('Invalid input:', input);
+      return res.status(400).json({ error: 'input must be a non-empty array' });
+    }
+
+    const inputText = input[0]?.content?.[0]?.text;
+    if (!inputText || typeof inputText !== 'string') {
+      console.error('Invalid input text:', inputText);
+      return res.status(400).json({ error: 'input text must be a non-empty string' });
+    }
+
+    // MOCK: responde sin llamar a OpenAI
+    if (MOCK) {
+      const words = inputText.trim().split(/\s+/).slice(0, 8);
+      const mockSummary = words.join(' ') + (inputText.trim().split(/\s+/).length > 8 ? '...' : '');
+      console.log('🎭 MOCK mode - generating summary for:', inputText.substring(0, 50) + '...');
+      console.log('🎭 MOCK summary generated:', mockSummary);
+      return res.json({ content: mockSummary });
+    }
+
+    // Skip the experimental responses API and use chat completions directly
+    console.log('🔄 Using chat completions API for summary generation...');
+    const systemPrompt = "Extrae las ideas principales del texto y devuélvelas como palabras clave separadas por comas. Enfócate en conceptos clave, temas importantes y palabras relevantes. ";
+    
+    // Use a more reliable model for summaries
+    const summaryModel = model === 'gpt-5-nano' ? 'gpt-4o-mini' : model;
+    
+    const requestParams = {
+      model: summaryModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: inputText }
+      ],
+      temperature: 0.3,
+      max_tokens: Math.min(Math.floor(inputText.length * 0.5), 150) // Summary should be shorter than input
+    };
+
+    console.log('📡 Sending chat completion request with params:', {
+      model: requestParams.model,
+      messageCount: requestParams.messages.length,
+      maxTokens: requestParams.max_tokens,
+      inputLength: inputText.length
+    });
+
+    const data = await withRetries(() =>
+      client.chat.completions.create(requestParams)
+    );
+
+    const content = data?.choices?.[0]?.message?.content?.trim() || '';
+    console.log('✅ Chat completion success! Response length:', content.length);
+    console.log('📄 Summary content preview:', content.substring(0, 100) + '...');
+    
+    // Ensure we have valid content
+    if (!content) {
+      console.log('⚠️ Empty response from API, generating fallback summary...');
+      const words = inputText.trim().split(/\s+/).slice(0, 8);
+      const fallbackContent = words.join(' ') + (inputText.trim().split(/\s+/).length > 8 ? '...' : '');
+      console.log('🔄 Fallback summary generated:', fallbackContent);
+      return res.json({ content: fallbackContent, usage: data?.usage });
+    }
+    
+    res.json({ content, usage: data.usage });
+  } catch (e) {
+    console.error('❌ Summary error details:', {
+      status: e.status,
+      message: e.message,
+      response: e.response?.data || e.response?.body || 'no response data'
+    });
+    console.error('Full error object:', e);
+    if (e.status === 429) return res.status(429).json({ error: 'Rate limit / quota' });
+    const hint = /model.*not.*found|unknown.*model|does not exist|unsupported model/i.test(e.message)
+      ? 'Modelo no encontrado o no disponible para tu organización.'
+      : undefined;
+    res.status(500).json({ 
+      error: 'Summary failed: ' + (e.message || 'unknown error'),
+      hint 
+    });
+  }
+});
+
 app.post('/api/chat', async (req, res) => {
   try {
     console.log('Chat API called with:', { 
