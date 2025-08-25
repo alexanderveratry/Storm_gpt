@@ -402,7 +402,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .node.active { fill: var(--color-accent); stroke:#fff; stroke-width:3; }
 .node.user { fill:#ff2d55; stroke:#ffa3b5; }
 .node.user.active { fill:#ff5f7a; stroke:#fff; }
-.link { stroke:#444; stroke-width:2; opacity:0.6; }
+.link { stroke:#58f3fe; stroke-width:2; opacity:0.9; }
 .link.active-path { stroke: var(--color-accent); stroke-width:3; opacity:1; }
 
 .node-label .label-box { background:rgba(35,43,56,0.98); border:1px solid var(--color-border); color:var(--color-text); font-size:13px; line-height:1.4; padding:8px 12px; border-radius: var(--radius-md); min-width:120px; max-width:200px; height:auto; min-height:40px; overflow:visible; white-space:normal; word-wrap:break-word; }

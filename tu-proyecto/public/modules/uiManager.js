@@ -286,14 +286,8 @@ export class UIManager {
       console.log('Empty message, skipping');
       return;
     }
-    
-    if (this.tree.isProcessing) {
-      console.log('Tree is processing, skipping');
-      return;
-    }
 
     console.log('Adding user message:', content.substring(0, 50));
-    input.disabled = true;
 
     // Lógica simplificada para el parentId
     let parentId = this.tree.currentNodeId;
@@ -332,16 +326,24 @@ export class UIManager {
       this.updateAll();
 
       setStatus('Esperando respuesta IA…');
-      const reply = await this.tree.generateAIResponse();
-      setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA (vacía).');
-      console.log('Message flow completed successfully');
-    } catch (err) {
-      console.error('AI response error', err);
-      setStatus('Error IA: ' + (err.message ?? 'desconocido'));
-    } finally {
-      this.updateAll();
-      input.disabled = false;
+      // Generar respuesta de IA en background sin bloquear la interfaz
+      this.tree.generateAIResponse().then((reply) => {
+        setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA (vacía).');
+        console.log('Message flow completed successfully');
+        this.updateAll(); // Actualizar interfaz cuando se reciba la respuesta
+        setTimeout(clearStatus, 4000);
+      }).catch((err) => {
+        console.error('AI response error', err);
+        setStatus('Error IA: ' + (err.message ?? 'desconocido'));
+        setTimeout(clearStatus, 4000);
+      });
+
+      // Limpiar input y reenfocar inmediatamente sin esperar la respuesta
       input.focus();
+      console.log('User message processed, UI remains interactive');
+    } catch (err) {
+      console.error('Error adding user message:', err);
+      setStatus('Error: ' + (err.message ?? 'desconocido'));
       setTimeout(clearStatus, 4000);
     }
   }

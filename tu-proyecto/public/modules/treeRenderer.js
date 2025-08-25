@@ -126,6 +126,14 @@ export class TreeRenderer {
       .attr('class', 'node-label')
       .attr('width', LAYOUT.label.w)
       .attr('height', LAYOUT.label.h)
+      .style('cursor', 'pointer') // Indicar que es clickeable
+      .on('click', (ev, d) => {
+        // Aplicar el mismo comportamiento de enfoque que el chat
+        ev.stopPropagation(); // Evitar que se propague al nodo padre
+        tree.currentNodeId = d.id;
+        updateAll();
+        console.log(`🏷️ Label clicked: Focus changed to node ${d.id}`);
+      })
       .html((d) => {
         const full = tree.nodes.get(d.id);
         const showFull = tree.getEffectiveViewState(d.id);

@@ -306,7 +306,13 @@ export class EnhancedConversationalTree extends ConversationalTree {
       console.log(`🌱 Set ${id} as root node`);
     }
 
-    this.currentNodeId = id;
+    // Solo cambiar el nodo actual si es un mensaje de usuario, no respuestas de IA
+    if (!isAI) {
+      this.currentNodeId = id;
+      console.log(`🎯 Focus changed to user node: ${id}`);
+    } else {
+      console.log(`🤖 AI response node ${id} added without changing focus`);
+    }
 
     this.generateSummaryForNode(id).catch((err) => console.warn('Summary generation failed', err));
     return id;
