@@ -40,7 +40,7 @@ app.get('/api/models', (_req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-  const { message, model = 'gpt-4o-mini' } = req.body || {}; // El servidor acepta cualquier modelo que soporte la API
+  const { message, model = 'gpt-5-nano' } = req.body || {}; // El servidor acepta cualquier modelo que soporte la API
     if (!message) {
       return res.status(400).json({ error: 'Falta message' });
     }

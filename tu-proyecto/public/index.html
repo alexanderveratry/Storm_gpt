@@ -4,53 +4,81 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Multi-branch conversational tree visualizer with contextual memory." />
-    <title>Conversational Tree</title>
+    <title>Storm Gpt - Tree UI modelSelector</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" defer></script>
     <script src="app.js" type="module" defer></script>
 </head>
 <body>
-    <div class="container">
-        <aside class="sidebar" aria-label="Conversation sidebar">
-            <h1 class="app-title">Conversational Tree</h1>
-            <section class="chat-area" id="chatArea" aria-live="polite" aria-label="Conversation path"></section>
-            <form id="messageForm" class="input-area" autocomplete="off" aria-label="Send message form">
-                <label class="visually-hidden" for="messageInput">Message</label>
-                <input id="messageInput" name="message" type="text" placeholder="Type your message..." aria-required="true" />
-                <label class="visually-hidden" for="modelSelector">Model</label>
-                <select id="modelSelector" class="model-selector" aria-label="Model selector">
-                    <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-5-nano" selected>GPT-5 Nano</option>
-                    <option value="gpt-5-mini">GPT-5 Mini</option>
-                    <option value="gpt-5">GPT-5</option>
-                </select>
-                <button type="submit" id="sendBtn">Send</button>
-            </form>
-            <section class="memory-context" aria-label="Contextual memory">
-                <h2>Contextual Memory</h2>
-                <div id="memoryContext"></div>
-            </section>
-        </aside>
-        <main class="tree-view" id="treeView" aria-label="Conversation tree visualization">
-            <svg id="treeSvg" width="100%" height="100%" role="img" aria-label="Tree diagram"></svg>
-            <div class="controls" role="group" aria-label="Visualization controls">
-                <button type="button" data-action="change-view">CHANGE VIEW</button>
-                <button type="button" data-action="reset-view">Reset View</button>
-                <button type="button" data-action="export">Export</button>
-                <button type="button" data-action="import">Import</button>
-                <input type="file" id="importFile" accept="application/json" hidden />
-            </div>
-            <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
-            <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
-                <div class="info-panel-header">
-                    <h2>Node Info</h2>
-                    <button type="button" class="close-btn" id="closeInfoPanel" aria-label="Close node info panel">✕</button>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="logo-container">
+                <!-- Storm animation sequence -->
+                <div class="storm-animation">
+                    <img src="sequence/storm1.png" alt="Storm Animation" class="storm-frame" id="stormFrame1">
+                    <img src="sequence/storm2..png" alt="Storm Animation" class="storm-frame" id="stormFrame2">
+                    <img src="sequence/storm3.png" alt="Storm Animation" class="storm-frame" id="stormFrame3">
+                    <img src="sequence/storm4.png" alt="Storm Animation" class="storm-frame" id="stormFrame4">
                 </div>
-                <div id="nodeInfo"></div>
             </div>
-        </main>
+            <h1 class="splash-title"> Storm Gpt </h1>
+            <p class="splash-subtitle">Multi-branch LLM and others models integration. </p>
+            <div class="loading-animation">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application (initially hidden) -->
+    <div id="mainApp" class="main-app hidden">
+        <div class="container">
+            <aside class="sidebar" aria-label="Conversation sidebar">
+                <h1 class="app-title">Conversational Tree</h1>
+                <section class="chat-area" id="chatArea" aria-live="polite" aria-label="Conversation path"></section>
+                <form id="messageForm" class="input-area" autocomplete="off" aria-label="Send message form">
+                    <label class="visually-hidden" for="messageInput">Message</label>
+                    <input id="messageInput" name="message" type="text" placeholder="Type your message..." aria-required="true" />
+                    <label class="visually-hidden" for="modelSelector">Model</label>
+                    <select id="modelSelector" class="model-selector" aria-label="Model selector">
+                        <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-5-nano" selected>GPT-5 Nano</option>
+                        <option value="gpt-5-mini">GPT-5 Mini</option>
+                        <option value="gpt-5">GPT-5</option>
+                    </select>
+                    <button type="submit" id="sendBtn">Send</button>
+                </form>
+                <section class="memory-context" aria-label="Contextual memory">
+                    <h2>Contextual Memory</h2>
+                    <div id="memoryContext"></div>
+                </section>
+            </aside>
+            <main class="tree-view" id="treeView" aria-label="Conversation tree visualization">
+                <svg id="treeSvg" width="100%" height="100%" role="img" aria-label="Tree diagram"></svg>
+                <div class="controls" role="group" aria-label="Visualization controls">
+                    <button type="button" data-action="change-view">CHANGE VIEW</button>
+                    <button type="button" data-action="reset-view" hidden="True">Reset View (in dev)</button> 
+                    <button type="button" data-action="check-summaries">Revisar Resúmenes</button>
+                    <button type="button" data-action="export">Export</button>
+                    <button type="button" data-action="import">Import</button>
+                    <input type="file" id="importFile" accept="application/json" hidden />
+                </div>
+                <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+                <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
+                    <div class="info-panel-header">
+                        <h2>Node Info</h2>
+                        <button type="button" class="close-btn" id="closeInfoPanel" aria-label="Close node info panel">✕</button>
+                    </div>
+                    <div id="nodeInfo"></div>
+                </div>
+            </main>
+        </div>
     </div>
 </body>
 </html>

@@ -93,20 +93,20 @@ window._ctree = {
   get renderer() { return renderer; },
   get openaiIntegration() { return openaiIntegration; },
   
-  // Función para revisar resúmenes manualmente
-  checkSummaries: async () => {
-    if (uiManager) {
-      await uiManager.checkSummaries();
-    } else {
-      console.log('❌ UIManager not available');
+  // Función para controlar el intervalo de resúmenes
+  pauseSummaryGeneration: () => {
+    if (window._summaryIntervalId) {
+      clearInterval(window._summaryIntervalId);
+      window._summaryIntervalId = null;
+      console.log('📴 Summary generation paused manually');
     }
   },
-  
-  // Funciones legacy mantenidas por compatibilidad (ya no usan intervalos)
-  pauseSummaryGeneration: () => {
-    console.log('📴 Summary generation is now manual - no automatic intervals to pause');
-  },
   resumeSummaryGeneration: () => {
-    console.log('▶️ Summary generation is now manual - use the "Revisar Resúmenes" button');
+    if (!window._summaryIntervalId && tree) {
+      window._summaryIntervalId = setInterval(() => {
+        if (tree) tree.ensureSummaries();
+      }, SUMMARY_INTERVAL_MS);
+      console.log('▶️ Summary generation resumed manually');
+    }
   }
 };

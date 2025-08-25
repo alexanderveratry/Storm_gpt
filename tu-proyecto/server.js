@@ -119,16 +119,14 @@ app.post('/api/summary', async (req, res) => {
     const systemPrompt = "Extrae las ideas principales del texto y devuélvelas como palabras clave separadas por comas. Enfócate en conceptos clave, temas importantes y palabras relevantes. ";
     
     // Use a more reliable model for summaries
-    const summaryModel = model === 'gpt-5-nano' ? 'gpt-4o-mini' : model;
-    
+    const summaryModel = model === 'gpt-5-nano' ? 'gpt-5-nano' : model;
+
     const requestParams = {
       model: summaryModel,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: inputText }
       ],
-      temperature: 0.3,
-      max_tokens: Math.min(Math.floor(inputText.length * 0.5), 150) // Summary should be shorter than input
     };
 
     console.log('📡 Sending chat completion request with params:', {
