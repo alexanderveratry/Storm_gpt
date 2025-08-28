@@ -319,8 +319,6 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   cursor: not-allowed;
 }
 
-.tooltip { position:fixed; pointer-events:none; background:rgba(30,40,60,0.98); border:1px solid var(--color-border); color:var(--color-text); padding:8px 10px; border-radius: var(--radius-lg); max-width:380px; font-size:12px; line-height:1.4; z-index:1000; box-shadow:0 6px 18px rgba(0,0,0,0.35); display:none; white-space:normal; word-wrap:break-word; }
-
 /* Improved centered info panel */
 .info-panel { 
   position: fixed;

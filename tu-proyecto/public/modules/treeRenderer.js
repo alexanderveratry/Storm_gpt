@@ -1,6 +1,14 @@
 /*
  * treeRenderer.js — D3.js Tree Visualization
- * Renderizado del árbol conversacional usando D3.js.
+ * Renderizado del árbol conversacional usand      })
+      // removed dblclick reset and tooltip functionality for better accessibility
+      .attr('aria-label', (d) => {
+        const content = d.content || '';
+        const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
+        return `Node: ${truncated}`;
+      })
+      .attr('title', (d) => d.content || '')
+      .attr('transform', (d) => `translate(${this._posX(d)},${this._posY(d)})`)s.
  */
 
 import { LAYOUT, ZOOM_EXTENT, SELECTORS } from './constants.js';
@@ -10,7 +18,6 @@ export class TreeRenderer {
   constructor(svgSel) {
     this.svg = d3.select(svgSel);
     this.g = this.svg.append('g');
-    this.tooltipEl = document.querySelector(SELECTORS.tooltip);
 
     const zoom = d3.zoom().scaleExtent(ZOOM_EXTENT).on('zoom', (ev) => {
       this.g.attr('transform', ev.transform);
@@ -382,26 +389,4 @@ export class TreeRenderer {
     if (n.fy == null && n.layoutY == null) n.layoutY = y;
   }
 
-  /* ----- tooltip ----- */
-
-  _showTooltip(ev, d) {
-    if (!this.tooltipEl) return;
-    this.tooltipEl.style.display = 'block';
-    this.tooltipEl.textContent = d.content ?? '';
-    const off = 14;
-    this.tooltipEl.style.left = `${ev.pageX + off}px`;
-    this.tooltipEl.style.top = `${ev.pageY + off}px`;
-    this.tooltipEl.setAttribute('aria-hidden', 'false');
-  }
-  _moveTooltip(ev) {
-    if (!this.tooltipEl || this.tooltipEl.style.display === 'none') return;
-    const off = 14;
-    this.tooltipEl.style.left = `${ev.pageX + off}px`;
-    this.tooltipEl.style.top = `${ev.pageY + off}px`;
-  }
-  _hideTooltip() {
-    if (!this.tooltipEl) return;
-    this.tooltipEl.style.display = 'none';
-    this.tooltipEl.setAttribute('aria-hidden', 'true');
-  }
 }

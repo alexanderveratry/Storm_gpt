@@ -31,7 +31,6 @@ export const SPLASH_DURATION = 3000; // 3 seconds
 // Selectores de elementos del DOM usados en la app
 export const SELECTORS = {
   svg: '#treeSvg',
-  tooltip: '#tooltip',
   messageForm: '#messageForm',
   messageInput: '#messageInput',
   importFile: '#importFile',
