@@ -531,6 +531,7 @@ class EnhancedConversationalTree extends ConversationalTree {
  
     try { 
       // Use the new /api/summary endpoint that supports OpenAI responses API format
+      const developerInstruction = 'Instrucciones:  Haz un resumen lo más corto posible, Ignora reiteraciones sobre un mismo asunto y limítate solo a las ideas principales. Devuelve solo conceptos claves. La respuesta no puede ser mayor que el input.';
       const requestBody = {
         "model": "gpt-5-nano",
         "input": [
@@ -539,7 +540,16 @@ class EnhancedConversationalTree extends ConversationalTree {
             "content": [
               {
                 "type": "input_text",
-                "text": ` Ignora reiteraciones sobre un mismo asunto y limítate solo a las ideas principales. Devuelve solo conceptos claves. La respuesta no puede ser mayor que el input.\n\n\n\n${node.content}`
+                "text": developerInstruction
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": node.content
               }
             ]
           }
@@ -560,7 +570,7 @@ class EnhancedConversationalTree extends ConversationalTree {
       console.log('🚀 Sending summary request to /api/summary');
       console.log('📤 Request body structure:', {
         model: requestBody.model,
-        inputLength: requestBody.input[0].content[0].text.length,
+        userInputLength: (node.content || '').length,
         verbosity: requestBody.text.verbosity
       });
 
@@ -587,33 +597,56 @@ class EnhancedConversationalTree extends ConversationalTree {
 
       const n = this.nodes.get(nodeId); 
       if (n) { 
-        let summary = data?.content || '';
-        
-        // Clean and validate the summary
+        const inputLengthLimit = (n.content || '').length;
+        let summary = typeof data?.content === 'string' ? data.content : '';
+
         if (summary) {
-          // Remove any extra whitespace and newlines
+          // Normalize whitespace
           summary = summary.trim().replace(/\s+/g, ' ');
-          
-          // Split into keywords and limit to 10
-          const keywords = summary.split(',')
-            .map(k => k.trim())
-            .filter(k => k && k.length > 0)
-            .slice(0, 10); // Ensure max 10 keywords
-          
-          // Rejoin and set summary
-          summary = keywords.join(', ');
-          n.keywords = keywords;
-          console.log('🔤 Generated keywords:', keywords);
+
+          // Extract concepts, remove redundancy (case-insensitive), limit to 10
+          const rawItems = summary.split(/[\n;,•\-]+|,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(s => s.trim()).filter(Boolean);
+          const seen = new Set();
+          const concepts = [];
+          const userTextLc = (n.content || '').toLowerCase();
+          for (const item of rawItems) {
+            const norm = item.toLowerCase();
+            // Keep only if not seen and concept links to user's text (at least one 4+ letter word appears in user text)
+            const hasUserOverlap = norm.split(/\s+/).some(w => w.length >= 4 && userTextLc.includes(w));
+            if (!seen.has(norm) && hasUserOverlap) {
+              seen.add(norm);
+              concepts.push(item);
+              if (concepts.length >= 10) break;
+            }
+          }
+
+          let joined = concepts.join(', ');
+
+          // Enforce length restriction: summary must not exceed input length
+          while (joined.length > inputLengthLimit && concepts.length > 1) {
+            concepts.pop();
+            joined = concepts.join(', ');
+          }
+          if (joined.length > inputLengthLimit) {
+            joined = joined.slice(0, inputLengthLimit);
+          }
+
+          summary = joined;
+          n.keywords = concepts;
+          console.log('🔤 Generated keywords (deduped):', concepts);
         }
-        
-        // Fallback: generate shorter summary from content
+
+        // Fallback: extract short concepts from content
         if (!summary || summary.length === 0) {
-          const words = n.content.trim().split(/\s+/).slice(0, 8); // Max 8 words
-          summary = words.join(' ') + (n.content.trim().split(/\s+/).length > 8 ? '...' : '');
-          n.keywords = words.filter(w => w.length > 3); // Only meaningful words
+          const wordsAll = n.content.trim().split(/\s+/);
+          const words = wordsAll.filter(w => w.length > 3).slice(0, 8);
+          let fallback = words.join(', ');
+          if (fallback.length > inputLengthLimit) fallback = fallback.slice(0, inputLengthLimit);
+          summary = fallback || n.content.slice(0, inputLengthLimit);
+          n.keywords = words;
           console.log('🔄 Using fallback summary:', summary);
         }
-        
+
         n.summary = summary;
         console.log('✅ Summary saved for node:', nodeId, '→', summary);
       } 

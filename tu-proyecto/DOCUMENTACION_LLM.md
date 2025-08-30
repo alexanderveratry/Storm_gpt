@@ -268,14 +268,7 @@ npm install                 # Instalar dependencias
 npm start                   # Iniciar servidor
 ```
 
-### Modo Mock para Desarrollo:
-Cuando `MOCK_OPENAI=true`:
-- Embeddings sintéticos deterministas
-- Respuestas de IA simuladas
-- No consume API de OpenAI
-- Útil para desarrollo y testing
 
-## 🔍 Puntos de Extensión
 
 ### Para Añadir Nuevas Funcionalidades:
 
