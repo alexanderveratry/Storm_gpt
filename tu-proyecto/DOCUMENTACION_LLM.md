@@ -120,6 +120,7 @@ class UIManager {
   transformJsonFormat()          // Transforma JSON externo al formato interno
   onTransformFile()              // Maneja la selección y transformación de archivos
   checkSummaries()               // Revisa y genera resúmenes faltantes
+  toggleSidebar()                // Expande/contrae el panel lateral con animación
 }
 ```
 
@@ -233,7 +234,8 @@ function relevanceScore(node, target, proximity) {
 - **Nodos Usuario**: Rombos rojos rotados 45°
 - **Enlaces**: Líneas grises que se vuelven verdes en el path activo
 - **Tooltips**: Cajas flotantes con fondo semi-transparente
-- **Sidebar**: Panel izquierdo con chat history
+- **Sidebar**: Panel izquierdo con chat history (expandible/contraíble)
+- **Botón Toggle**: Círculo verde ‹ para contraer/expandir sidebar con animación suave
 
 ## 🔄 Sistema de Persistencia
 
@@ -255,12 +257,21 @@ function relevanceScore(node, target, proximity) {
 }
 ```
 
-### Proceso de Importación:
+### Proceso de Importación (Optimizado):
 1. Se limpia el árbol actual
 2. Nodos se ordenan por timestamp
-3. Se reconstruyen relaciones padre-hijo
-4. Se regeneran embeddings
-5. Se infieren roles user/assistant alternados
+3. **Generación paralela de embeddings** (principal optimización)
+4. Se construyen nodos con embeddings obtenidos
+5. Se reconstruyen relaciones padre-hijo
+6. Se infieren roles user/assistant alternados
+7. **Generación de resúmenes condicional** (solo para conversaciones ≤20 nodos)
+
+#### Optimizaciones de Rendimiento:
+- **Procesamiento paralelo**: Los embeddings se generan simultáneamente en lugar de secuencialmente
+- **Resúmenes inteligentes**: Solo se generan automáticamente para conversaciones pequeñas
+- **Indicadores de progreso**: Muestra porcentaje de carga en tiempo real
+- **Cache de embeddings**: El servidor evita recalcular embeddings repetidos
+- **UI diferida**: La interfaz se actualiza una sola vez al final del proceso
 
 ### Transformación de JSON:
 La aplicación incluye una funcionalidad para transformar archivos JSON de formato externo al formato interno de la aplicación.
@@ -330,6 +341,12 @@ npm start                   # Iniciar servidor
 3. **Export**: Descarga el árbol actual en formato JSON
 4. **Import**: Carga un archivo JSON con formato de la aplicación
 5. **Transform JSON**: Convierte archivos JSON externos al formato interno
+6. **Toggle Sidebar**: Botón ‹ en el sidebar para expandir/contraer el panel lateral
+
+### Atajos de Teclado:
+
+- **Ctrl/Cmd + B**: Alternar sidebar (expandir/contraer)
+- **Escape**: Cerrar panel de información de nodo
 
 ### Para Añadir Nuevas Funcionalidades:
 

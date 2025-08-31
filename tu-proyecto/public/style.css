@@ -238,7 +238,76 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .visually-hidden { position: absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 
 .container { display: flex; height: 100vh; }
-.sidebar { width: 400px; background: var(--color-panel); border-right: 1px solid var(--color-border); padding: 20px; display:flex; flex-direction:column; gap:16px; }
+.sidebar { 
+  width: 400px; 
+  background: var(--color-panel); 
+  border-right: 1px solid var(--color-border); 
+  padding: 20px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px;
+  transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+.sidebar.collapsed { 
+  width: 60px; 
+  padding: 20px 8px;
+  gap: 8px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+  min-height: 40px;
+}
+
+.sidebar-toggle {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background: var(--color-accent-alt);
+  transform: scale(1.1);
+}
+
+.sidebar-toggle:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.sidebar.collapsed .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.sidebar.collapsed .app-title {
+  display: none;
+}
+
+.sidebar.collapsed .chat-area,
+.sidebar.collapsed .input-area {
+  display: none;
+}
 .app-title { font-size: 1rem; font-weight:600; }
 
 .chat-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width: thin; gap:4px; }
@@ -293,7 +362,14 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 
 
 
-.tree-view { flex:1; background:#181f2a; color:var(--color-text); position:relative; overflow:hidden; }
+.tree-view { 
+  flex: 1; 
+  background: #181f2a; 
+  color: var(--color-text); 
+  position: relative; 
+  overflow: hidden;
+  transition: margin-left 0.3s ease;
+}
 .controls { position:absolute; top:20px; right:20px; display:flex; gap:10px; }
 .controls button { background:#d5e8ff; color:#000000; border:1px solid var(--color-border); padding:8px 12px; border-radius: var(--radius-md); cursor:pointer; }
 .controls button:hover, .controls button:focus-visible { background:#005bb5; }
@@ -404,5 +480,24 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .wrapper-layer .node-wrapper-box.active { stroke:#ffffff; stroke-width:2px; fill: rgba(173,216,230,0.32); }
 
 /* Responsive */
-@media (max-width: 1100px) { .sidebar { width:320px; } }
-@media (max-width: 880px) { body { overflow:auto; } .container { flex-direction:column; height:auto; } .tree-view { height:70vh; } }
+@media (max-width: 1100px) { 
+  .sidebar { width: 320px; } 
+  .sidebar.collapsed { width: 50px; }
+}
+
+@media (max-width: 880px) { 
+  body { overflow: auto; } 
+  .container { flex-direction: column; height: auto; } 
+  .tree-view { height: 70vh; }
+  
+  /* En móviles, el sidebar colapsado es más pequeño */
+  .sidebar.collapsed { width: 40px; padding: 10px 4px; }
+  .sidebar-toggle { width: 28px; height: 28px; font-size: 16px; }
+}
+
+/* Mejor soporte para pantallas pequeñas */
+@media (max-width: 600px) {
+  .sidebar { width: 280px; padding: 16px; }
+  .sidebar.collapsed { width: 35px; padding: 8px 2px; }
+  .sidebar-toggle { width: 24px; height: 24px; font-size: 14px; }
+}

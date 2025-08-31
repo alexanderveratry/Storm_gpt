@@ -583,7 +583,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
     return this.rootId || this.currentNodeId;
   }
 
-  async loadExportedNodes(arr) {
+  async loadExportedNodes(arr, progressCallback = null) {
     this.nodes = new Map();
     this.rootId = null;
     this.currentNodeId = null;
@@ -594,20 +594,43 @@ export class EnhancedConversationalTree extends ConversationalTree {
       .map((n) => ({ ...n, timestamp: n.timestamp ? new Date(n.timestamp) : new Date() }))
       .sort((a, b) => a.timestamp - b.timestamp);
 
-    for (const n of parsed) {
-      const id = n.id && /^node_\d+$/.test(n.id) ? n.id : `node_${this.idCounter}`;
-      const numeric = parseInt(id.split('_')[1] ?? '0', 10);
-      this.idCounter = Math.max(this.idCounter, numeric + 1);
-
-      const idx = parsed.indexOf(n);
+    console.log(`🚀 Loading ${parsed.length} nodes with parallel embedding generation...`);
+    
+    // OPTIMIZACIÓN 1: Procesar embeddings en paralelo
+    const embeddingPromises = parsed.map(async (n, idx) => {
+      const id = n.id && /^node_\d+$/.test(n.id) ? n.id : `node_${this.idCounter + idx}`;
       const role = idx === 0 ? 'assistant' : idx % 2 === 1 ? 'user' : 'assistant';
-
+      
       let embedding;
       try {
         embedding = await this.openai.getEmbedding(n.content ?? '');
       } catch {
         embedding = this.openai.fallbackEmbedding(n.content ?? '');
       }
+
+      // Callback de progreso opcional
+      if (progressCallback) {
+        progressCallback(idx + 1, parsed.length);
+      }
+
+      return {
+        originalData: n,
+        id,
+        role,
+        embedding,
+        idx
+      };
+    });
+
+    // Esperar a que todos los embeddings se generen en paralelo
+    const embeddingResults = await Promise.all(embeddingPromises);
+    
+    // OPTIMIZACIÓN 2: Construir nodos después de tener todos los embeddings
+    for (const result of embeddingResults) {
+      const { originalData: n, id, role, embedding, idx } = result;
+      
+      const numeric = parseInt(id.split('_')[1] ?? '0', 10);
+      this.idCounter = Math.max(this.idCounter, numeric + 1);
 
       const node = {
         id,
@@ -626,6 +649,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
       this.nodes.set(id, node);
     }
 
+    // Construir relaciones padre-hijo
     this.nodes.forEach((node) => {
       if (node.parentId && this.nodes.has(node.parentId)) this.nodes.get(node.parentId).children.push(node.id);
     });
@@ -633,5 +657,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
     const roots = [...this.nodes.values()].filter((n) => !n.parentId).sort(byTimeAsc);
     this.rootId = roots[0]?.id ?? null;
     this.currentNodeId = this.rootId;
+    
+    console.log(`✅ Loaded ${this.nodes.size} nodes successfully`);
   }
 }

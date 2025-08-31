@@ -205,6 +205,34 @@ export class UIManager {
     }
   }
 
+  toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    
+    if (!sidebar || !toggleIcon) return;
+
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+      // Expandir sidebar
+      sidebar.classList.remove('collapsed');
+      sidebar.setAttribute('aria-expanded', 'true');
+      toggleIcon.setAttribute('aria-label', 'Collapse sidebar');
+      console.log('📖 Sidebar expanded');
+    } else {
+      // Colapsar sidebar  
+      sidebar.classList.add('collapsed');
+      sidebar.setAttribute('aria-expanded', 'false');
+      toggleIcon.setAttribute('aria-label', 'Expand sidebar');
+      console.log('📕 Sidebar collapsed');
+    }
+
+    // Actualizar visualización después de un breve delay para permitir la transición CSS
+    setTimeout(() => {
+      this.updateVisualization();
+    }, 350);
+  }
+
   exportTree() {
     const data = {
       version: 1,
@@ -236,11 +264,57 @@ export class UIManager {
       const json = JSON.parse(text);
       if (!json.nodes) throw new Error('Invalid file: missing nodes');
 
-      await this.tree.loadExportedNodes(json.nodes);
+      // OPTIMIZACIÓN: Mostrar progreso y hacer resúmenes opcionales
+      const nodeCount = json.nodes.length;
+      const shouldGenerateSummaries = nodeCount <= 20; // Solo auto-generar para conversaciones pequeñas
+      
+      console.log(`📥 Importing ${nodeCount} nodes (summaries: ${shouldGenerateSummaries ? 'auto' : 'manual'})`);
+      
+      // Indicador de progreso durante la carga
+      const importBtn = document.querySelector('[data-action="import"]');
+      if (importBtn) {
+        importBtn.disabled = true;
+        importBtn.textContent = 'Loading...';
+      }
+
+      // Callback de progreso para embeddings
+      const progressCallback = (current, total) => {
+        if (importBtn) {
+          const percentage = Math.round((current / total) * 100);
+          importBtn.textContent = `Loading ${percentage}%`;
+        }
+      };
+
+      // OPTIMIZACIÓN: Cargar nodos con progreso
+      await this.tree.loadExportedNodes(json.nodes, progressCallback);
+      
+      // OPTIMIZACIÓN: Actualizar UI una sola vez después de cargar todo
       this.updateAll();
-      this.tree.ensureSummaries?.();
+      
+      // OPTIMIZACIÓN: Resúmenes opcionales según tamaño
+      if (shouldGenerateSummaries) {
+        console.log('🔄 Auto-generating summaries for small conversation...');
+        this.tree.ensureSummaries?.();
+      } else {
+        console.log('⏭️ Skipping auto-summary generation for large conversation. Use "Revisar Resúmenes" button if needed.');
+        alert(`Imported ${nodeCount} nodes successfully!\n\nSummaries not generated automatically for large conversations.\nUse "Revisar Resúmenes" button if needed.`);
+      }
+
+      if (importBtn) {
+        importBtn.disabled = false;
+        importBtn.textContent = 'Import';
+      }
+      
     } catch (err) {
+      console.error('Import error:', err);
       alert('Failed to import: ' + err.message);
+      
+      // Restaurar botón en caso de error
+      const importBtn = document.querySelector('[data-action="import"]');
+      if (importBtn) {
+        importBtn.disabled = false;
+        importBtn.textContent = 'Import';
+      }
     } finally {
       e.target.value = '';
     }
@@ -315,21 +389,56 @@ export class UIManager {
       const preview = `Archivo transformado:\n- Nodos totales: ${transformedJson.nodes.length}\n- Nodo inicial: "Bienvenido"\n- Mensajes importados: ${transformedJson.nodes.length - 1}\n- Primer mensaje importado: "${transformedJson.nodes[1]?.content.substring(0, 50)}..."\n\n¿Deseas cargar esta conversación?`;
       
       if (confirm(preview)) {
-        // Cargar los nodos transformados
-        await this.tree.loadExportedNodes(transformedJson.nodes);
-        this.updateAll();
-        this.tree.ensureSummaries?.();
+        // OPTIMIZACIÓN: Aplicar las mismas mejoras que en onImportFile
+        const nodeCount = transformedJson.nodes.length;
+        const shouldGenerateSummaries = nodeCount <= 20;
         
-        // Opcional: descargar el archivo transformado
-        const downloadTransformed = confirm('¿Deseas descargar el archivo transformado?');
-        if (downloadTransformed) {
-          const blob = new Blob([JSON.stringify(transformedJson, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `transformed_${file.name}`;
-          a.click();
-          URL.revokeObjectURL(url);
+        console.log(`🔄 Loading transformed conversation: ${nodeCount} nodes (summaries: ${shouldGenerateSummaries ? 'auto' : 'manual'})`);
+        
+        // Indicador de progreso
+        const transformBtn = document.querySelector('[data-action="transform-json"]');
+        if (transformBtn) {
+          transformBtn.disabled = true;
+          transformBtn.textContent = 'Loading...';
+        }
+
+        // Callback de progreso
+        const progressCallback = (current, total) => {
+          if (transformBtn) {
+            const percentage = Math.round((current / total) * 100);
+            transformBtn.textContent = `Loading ${percentage}%`;
+          }
+        };
+
+        try {
+          // Cargar nodos transformados con progreso
+          await this.tree.loadExportedNodes(transformedJson.nodes, progressCallback);
+          this.updateAll();
+          
+          // Resúmenes opcionales
+          if (shouldGenerateSummaries) {
+            console.log('🔄 Auto-generating summaries for transformed conversation...');
+            this.tree.ensureSummaries?.();
+          } else {
+            console.log('⏭️ Skipping auto-summary for large transformed conversation.');
+          }
+          
+          // Opcional: descargar el archivo transformado
+          const downloadTransformed = confirm('¿Deseas descargar el archivo transformado?');
+          if (downloadTransformed) {
+            const blob = new Blob([JSON.stringify(transformedJson, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transformed_${file.name}`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }
+        } finally {
+          if (transformBtn) {
+            transformBtn.disabled = false;
+            transformBtn.textContent = 'Transform JSON';
+          }
         }
       }
     } catch (err) {
@@ -435,6 +544,7 @@ export class UIManager {
     const transformFile = document.querySelector('#transformFile');
     const controls = document.querySelector(SELECTORS.controls);
     const closeInfoBtn = document.querySelector('#closeInfoPanel');
+    const sidebarToggle = document.querySelector('#sidebarToggle');
 
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -448,16 +558,25 @@ export class UIManager {
     importFile?.addEventListener('change', (e) => this.onImportFile(e));
     transformFile?.addEventListener('change', (e) => this.onTransformFile(e));
 
+    // Sidebar toggle functionality
+    sidebarToggle?.addEventListener('click', () => this.toggleSidebar());
+
     // Close button for info panel
     closeInfoBtn?.addEventListener('click', () => this.closeNodeInfo());
 
-    // Keyboard support for closing info panel with Escape
+    // Keyboard support for closing info panel with Escape and sidebar toggle
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         const panel = document.querySelector(SELECTORS.infoPanel);
         if (panel && !panel.hidden) {
           this.closeNodeInfo();
         }
+      }
+      
+      // Ctrl/Cmd + B para toggle del sidebar
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        this.toggleSidebar();
       }
     });
 

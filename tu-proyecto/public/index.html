@@ -39,7 +39,12 @@
     <div id="mainApp" class="main-app hidden">
         <div class="container">
             <aside class="sidebar" aria-label="Conversation sidebar">
-                <h1 class="app-title">Conversational Tree</h1>
+                <div class="sidebar-header">
+                    <h1 class="app-title">Conversational Tree</h1>
+                    <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+                        <span class="toggle-icon">‹</span>
+                    </button>
+                </div>
                 <section class="chat-area" id="chatArea" aria-live="polite" aria-label="Conversation path"></section>
                 <form id="messageForm" class="input-area" autocomplete="off" aria-label="Send message form">
                     <label class="visually-hidden" for="messageInput">Message</label>
