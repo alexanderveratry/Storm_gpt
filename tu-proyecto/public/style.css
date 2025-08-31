@@ -239,7 +239,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 
 .container { display: flex; height: 100vh; }
 .sidebar { width: 400px; background: var(--color-panel); border-right: 1px solid var(--color-border); padding: 20px; display:flex; flex-direction:column; gap:16px; }
-.app-title { font-size: 1.4rem; font-weight:600; }
+.app-title { font-size: 1rem; font-weight:600; }
 
 .chat-area { flex:1; display:flex; flex-direction:column; overflow-y:auto; scrollbar-width: thin; gap:4px; }
 .chat-area::-webkit-scrollbar { width: 8px; }
@@ -291,12 +291,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 }
 .copy-success { background-color:#00aa44 !important; }
 
-.memory-context { border-top:1px solid var(--color-border); padding-top:12px; }
-.context-item { background:#232b38; color:var(--color-text); padding:8px; margin:4px 0; border-radius: var(--radius-sm); font-size:12px; border-left:2px solid #666; display:flex; align-items:center; gap:4px; }
-.proximity-indicator { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.proximity-indicator.close { background: var(--color-danger); }
-.proximity-indicator.medium { background:#ffaa00; }
-.proximity-indicator.far { background:#666; }
+
 
 .tree-view { flex:1; background:#181f2a; color:var(--color-text); position:relative; overflow:hidden; }
 .controls { position:absolute; top:20px; right:20px; display:flex; gap:10px; }
@@ -403,7 +398,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .link { stroke:#58f3fe; stroke-width:2; opacity:0.9; }
 .link.active-path { stroke: var(--color-accent); stroke-width:3; opacity:1; }
 
-.node-label .label-box { background:rgba(35,43,56,0.98); border:1px solid var(--color-border); color:var(--color-text); font-size:16px; line-height:1.4; padding:8px 12px; border-radius: var(--radius-md); min-width:120px; max-width:200px; height:auto; min-height:40px; overflow:visible; white-space:normal; word-wrap:break-word; }
+.node-label .label-box { background:rgba(35,43,56,0.98); border:1px solid var(--color-border); color:var(--color-text); font-size:8px; line-height:1.4; padding:8px 12px; border-radius: var(--radius-md); min-width:120px; max-width:200px; height:auto; min-height:40px; overflow:visible; white-space:normal; word-wrap:break-word; }
 
 .wrapper-layer .node-wrapper-box { fill: rgba(173, 216, 230, 0.22); stroke: #8ad9ff; stroke-width:1.5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
 .wrapper-layer .node-wrapper-box.active { stroke:#ffffff; stroke-width:2px; fill: rgba(173,216,230,0.32); }

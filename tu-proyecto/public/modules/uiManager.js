@@ -161,20 +161,7 @@ export class UIManager {
     this.updateAll();
   }
 
-  updateMemoryContext() {
-    const el = document.querySelector(SELECTORS.memoryContext);
-    if (!el) return;
-    const ctx = this.tree.getRelevantContext(this.tree.currentNodeId);
-    el.innerHTML = '';
-    for (const { node, proximity, reason } of ctx) {
-      const div = document.createElement('div');
-      div.className = 'context-item';
-      div.innerHTML = `<span class="proximity-indicator ${proximity}"></span><strong>${reason}:</strong> ${escapeHTML(
-        node.content.substring(0, 50),
-      )}...`;
-      el.appendChild(div);
-    }
-  }
+
 
   showNodeInfo(nodeData) {
     const panel = document.querySelector(SELECTORS.infoPanel);
@@ -259,6 +246,100 @@ export class UIManager {
     }
   }
 
+  /**
+   * Transforma un JSON con formato {messages: [{role: "Prompt|Response", say: "..."}]}
+   * al formato utilizado en la aplicación
+   * @param {Object} inputJson - JSON con formato original
+   * @returns {Object} - JSON transformado al formato de la app
+   */
+  transformJsonFormat(inputJson) {
+    if (!inputJson.messages || !Array.isArray(inputJson.messages)) {
+      throw new Error('Invalid JSON format: missing "messages" array');
+    }
+
+    const nodes = [];
+    const currentTime = new Date().toISOString();
+
+    // Agregar nodo inicial de bienvenida
+    const welcomeNode = {
+      id: "node_0",
+      content: "Bienvenido",
+      parentId: null,
+      timestamp: currentTime,
+      summary: "",
+      keywords: []
+    };
+    nodes.push(welcomeNode);
+
+    // Procesar mensajes de la conversación importada
+    inputJson.messages.forEach((message, index) => {
+      if (!message.role || !message.say) {
+        throw new Error(`Invalid message format at index ${index}: missing "role" or "say"`);
+      }
+
+      // Los IDs ahora empiezan desde node_1 porque node_0 es el de bienvenida
+      const nodeId = `node_${index + 1}`;
+      const parentId = index === 0 ? "node_0" : `node_${index}`;
+
+      const transformedNode = {
+        id: nodeId,
+        content: message.say,
+        parentId: parentId,
+        timestamp: currentTime,
+        summary: "", // Vacío como especificado
+        keywords: [] // Vacío como especificado
+      };
+
+      nodes.push(transformedNode);
+    });
+
+    return {
+      version: 1,
+      exportedAt: currentTime,
+      nodes: nodes
+    };
+  }
+
+  async onTransformFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const inputJson = JSON.parse(text);
+      
+      // Transformar el formato
+      const transformedJson = this.transformJsonFormat(inputJson);
+      
+      // Mostrar confirmación al usuario con preview del resultado
+      const preview = `Archivo transformado:\n- Nodos totales: ${transformedJson.nodes.length}\n- Nodo inicial: "Bienvenido"\n- Mensajes importados: ${transformedJson.nodes.length - 1}\n- Primer mensaje importado: "${transformedJson.nodes[1]?.content.substring(0, 50)}..."\n\n¿Deseas cargar esta conversación?`;
+      
+      if (confirm(preview)) {
+        // Cargar los nodos transformados
+        await this.tree.loadExportedNodes(transformedJson.nodes);
+        this.updateAll();
+        this.tree.ensureSummaries?.();
+        
+        // Opcional: descargar el archivo transformado
+        const downloadTransformed = confirm('¿Deseas descargar el archivo transformado?');
+        if (downloadTransformed) {
+          const blob = new Blob([JSON.stringify(transformedJson, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `transformed_${file.name}`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      }
+    } catch (err) {
+      console.error('Transform error:', err);
+      alert('Failed to transform: ' + err.message);
+    } finally {
+      e.target.value = '';
+    }
+  }
+
   updateVisualization() {
     this.renderer?.update(this.tree, 
       () => this.updateAll(), 
@@ -271,7 +352,6 @@ export class UIManager {
   updateAll() {
     this.updateVisualization();
     this.updateSidebar();
-    this.updateMemoryContext();
   }
 
   async addMessage() {
@@ -352,6 +432,7 @@ export class UIManager {
     const form = document.querySelector(SELECTORS.messageForm);
     const input = document.querySelector(SELECTORS.messageInput);
     const importFile = document.querySelector(SELECTORS.importFile);
+    const transformFile = document.querySelector('#transformFile');
     const controls = document.querySelector(SELECTORS.controls);
     const closeInfoBtn = document.querySelector('#closeInfoPanel');
 
@@ -365,6 +446,7 @@ export class UIManager {
     });
 
     importFile?.addEventListener('change', (e) => this.onImportFile(e));
+    transformFile?.addEventListener('change', (e) => this.onTransformFile(e));
 
     // Close button for info panel
     closeInfoBtn?.addEventListener('click', () => this.closeNodeInfo());
@@ -387,6 +469,7 @@ export class UIManager {
       if (!action) return;
       if (action === 'export') this.exportTree();
       else if (action === 'import') importFile?.click();
+      else if (action === 'transform-json') transformFile?.click();
       else if (action === 'change-view') this.toggleGlobalView();
       else if (action === 'check-summaries') this.checkSummaries();
     });

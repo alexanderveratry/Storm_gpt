@@ -93,16 +93,29 @@ app.post('/api/summary', async (req, res) => {
     
     const { model = 'gpt-5-nano', input, text, reasoning, tools, store } = req.body || {};
 
-    // Validate input
+    // Validate input (Responses API-like shape)
     if (!input || !Array.isArray(input) || input.length === 0) {
       console.error('Invalid input:', input);
       return res.status(400).json({ error: 'input must be a non-empty array' });
     }
 
-    const inputText = input[0]?.content?.[0]?.text;
-    if (!inputText || typeof inputText !== 'string') {
-      console.error('Invalid input text:', inputText);
-      return res.status(400).json({ error: 'input text must be a non-empty string' });
+    // Extract developer instructions and user text from the provided array
+    const developerBlocks = input.find((b) => b?.role === 'developer')?.content ?? [];
+    const userBlocks = input.find((b) => b?.role === 'user')?.content ?? [];
+    const developerInstruction = developerBlocks
+      .filter((c) => c && c.type === 'input_text' && typeof c.text === 'string')
+      .map((c) => c.text)
+      .join('\n')
+      .trim();
+    const userText = userBlocks
+      .filter((c) => c && c.type === 'input_text' && typeof c.text === 'string')
+      .map((c) => c.text)
+      .join('\n')
+      .trim();
+
+    if (!userText) {
+      console.error('Invalid or missing user text in input:', userBlocks);
+      return res.status(400).json({ error: 'user input text must be a non-empty string' });
     }
 
     // MOCK: responde sin llamar a OpenAI
@@ -116,16 +129,18 @@ app.post('/api/summary', async (req, res) => {
 
     // Skip the experimental responses API and use chat completions directly
     console.log('🔄 Using chat completions API for summary generation...');
-    const systemPrompt = "Extrae las ideas principales del texto y devuélvelas como palabras clave separadas por comas. Enfócate en conceptos clave, temas importantes y palabras relevantes. ";
-    
-    // Use a more reliable model for summaries
-    const summaryModel = model === 'gpt-5-nano' ? 'gpt-5-nano' : model;
+    // Prefer the developer instruction provided by the client; fallback to a safe default
+    const defaultPrompt = 'Ignora reiteraciones y limita a ideas principales. Devuelve solo conceptos clave, separados por comas. La respuesta no puede ser mayor que el input.';
+    const systemPrompt = (developerInstruction || defaultPrompt).trim();
+
+    // Use requested model (keep nano if specified)
+    const summaryModel = model || 'gpt-5-nano';
 
     const requestParams = {
       model: summaryModel,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: inputText }
+        { role: 'user', content: userText }
       ],
     };
 
@@ -133,7 +148,7 @@ app.post('/api/summary', async (req, res) => {
       model: requestParams.model,
       messageCount: requestParams.messages.length,
       maxTokens: requestParams.max_tokens,
-      inputLength: inputText.length
+      inputLength: userText.length
     });
 
     const data = await withRetries(() =>
@@ -147,7 +162,7 @@ app.post('/api/summary', async (req, res) => {
     // Ensure we have valid content
     if (!content) {
       console.log('⚠️ Empty response from API, generating fallback summary...');
-      const words = inputText.trim().split(/\s+/).slice(0, 8);
+      const words = userText.trim().split(/\s+/).slice(0, 8);
       const fallbackContent = words.join(' ') + (inputText.trim().split(/\s+/).length > 8 ? '...' : '');
       console.log('🔄 Fallback summary generated:', fallbackContent);
       return res.json({ content: fallbackContent, usage: data?.usage });

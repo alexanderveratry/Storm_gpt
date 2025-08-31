@@ -1,7 +1,7 @@
 # Documentación para LLM: Conversational Tree 🌳
 
 ## 🎯 Propósito del Proyecto
-Esta aplicación implementa un **sistema de conversación no lineal** donde las conversaciones pueden ramificarse como un árbol. Los usuarios pueden chatear con IA y crear múltiples ramas de conversación desde cualquier punto, con **memoria contextual inteligente** que ayuda a la IA a responder de manera más coherente.
+Esta aplicación implementa un **sistema de conversación no lineal** donde las conversaciones pueden ramificarse como un árbol. Los usuarios pueden chatear con IA y crear múltiples ramas de conversación desde cualquier punto, permitiendo explorar diferentes líneas de conversación de manera organizada.
 
 ## 🏗️ Arquitectura General
 
@@ -52,7 +52,7 @@ Cada mensaje en la conversación es un "nodo" con esta estructura:
 ```
 
 ### 2. Sistema de Contexto Relevante
-La IA recibe contexto de tres fuentes:
+La IA recibe contexto interno de tres fuentes para generar respuestas coherentes:
 
 1. **Path Context**: Todos los nodos en el camino desde la raíz hasta el nodo actual
 2. **Sibling Context**: Nodos hermanos (mismo padre)
@@ -111,6 +111,15 @@ class EnhancedConversationalTree extends ConversationalTree {
   generateAIResponse()           // Genera respuesta automática de IA
   generateSummaryForNode()       // Crea resúmenes automáticos
   loadExportedNodes()            // Importa conversaciones guardadas
+}
+
+// Gestión de interfaz de usuario
+class UIManager {
+  exportTree()                   // Exporta el árbol actual a JSON
+  onImportFile()                 // Importa archivo JSON con formato de la app
+  transformJsonFormat()          // Transforma JSON externo al formato interno
+  onTransformFile()              // Maneja la selección y transformación de archivos
+  checkSummaries()               // Revisa y genera resúmenes faltantes
 }
 ```
 
@@ -224,7 +233,7 @@ function relevanceScore(node, target, proximity) {
 - **Nodos Usuario**: Rombos rojos rotados 45°
 - **Enlaces**: Líneas grises que se vuelven verdes en el path activo
 - **Tooltips**: Cajas flotantes con fondo semi-transparente
-- **Sidebar**: Panel izquierdo con chat history y contexto
+- **Sidebar**: Panel izquierdo con chat history
 
 ## 🔄 Sistema de Persistencia
 
@@ -253,6 +262,50 @@ function relevanceScore(node, target, proximity) {
 4. Se regeneran embeddings
 5. Se infieren roles user/assistant alternados
 
+### Transformación de JSON:
+La aplicación incluye una funcionalidad para transformar archivos JSON de formato externo al formato interno de la aplicación.
+
+#### Formato de Entrada Esperado:
+```json
+{
+  "metadata": {
+    "dates": {
+      "created": "8/28/2025 16:39:42"
+    },
+    "powered_by": "ChatGPT Exporter (https://www.chatgptexporter.com)"
+  },
+  "messages": [
+    {
+      "role": "Prompt",
+      "say": "¿Mensaje del usuario?"
+    },
+    {
+      "role": "Response", 
+      "say": "Respuesta del asistente..."
+    }
+  ]
+}
+```
+
+#### Reglas de Transformación:
+- Se crea un nodo inicial de bienvenida (`node_0`) con contenido "Bienvenido"
+- Cada elemento en `messages` se convierte en un nodo adicional
+- El campo `say` se mapea a `content`
+- Los IDs se generan en orden ascendente: `node_0` (bienvenida), `node_1`, `node_2`, etc.
+- El nodo de bienvenida tiene `parentId: null`
+- El primer mensaje importado (`node_1`) tiene como padre el nodo de bienvenida (`node_0`)
+- Los nodos subsecuentes tienen como `parentId` el ID del nodo anterior
+- Los campos `summary` y `keywords` se inicializan vacíos
+- Se asigna el timestamp actual a todos los nodos
+
+#### Proceso de Transformación:
+1. Usuario hace click en "Transform JSON"
+2. Selecciona archivo JSON con formato externo
+3. El sistema valida la estructura del archivo
+4. Se muestra un preview del resultado
+5. Usuario confirma la carga
+6. Opcionalmente se puede descargar el archivo transformado
+
 ## 🛠️ Configuración y Uso
 
 ### Variables de Entorno:
@@ -270,6 +323,14 @@ npm start                   # Iniciar servidor
 
 
 
+### Controles Disponibles:
+
+1. **CHANGE VIEW**: Alterna entre vista de resumen y contenido completo
+2. **Revisar Resúmenes**: Genera resúmenes para nodos que no los tengan
+3. **Export**: Descarga el árbol actual en formato JSON
+4. **Import**: Carga un archivo JSON con formato de la aplicación
+5. **Transform JSON**: Convierte archivos JSON externos al formato interno
+
 ### Para Añadir Nuevas Funcionalidades:
 
 1. **Nuevos Tipos de Nodo**: Modificar `role` y añadir lógica en `updateVisualization()`
@@ -277,6 +338,7 @@ npm start                   # Iniciar servidor
 3. **Nuevos Modelos de IA**: Modificar endpoints en `server.js`
 4. **Persistencia en DB**: Reemplazar sistema de export/import
 5. **Colaboración Tiempo Real**: Añadir WebSockets
+6. **Nuevos Formatos de Transformación**: Extender `transformJsonFormat()` en `UIManager`
 
 ### Hooks de Eventos Importantes:
 ```javascript

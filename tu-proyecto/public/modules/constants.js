@@ -36,7 +36,6 @@ export const SELECTORS = {
   importFile: '#importFile',
   controls: '.controls',
   chatArea: '#chatArea',
-  memoryContext: '#memoryContext',
   infoPanel: '#infoPanel',
   nodeInfo: '#nodeInfo',
   statusBar: '#statusBar',

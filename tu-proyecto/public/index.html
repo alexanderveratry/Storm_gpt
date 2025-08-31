@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Multi-branch conversational tree visualizer with contextual memory." />
+    <meta name="description" content="Multi-branch conversational tree visualizer for AI conversations." />
     <title>Storm Gpt - Tree UI modelSelector</title>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
     <link rel="stylesheet" href="style.css" />
@@ -54,10 +54,7 @@
                     </select>
                     <button type="submit" id="sendBtn">Send</button>
                 </form>
-                <section class="memory-context" aria-label="Contextual memory">
-                    <h2>Contextual Memory</h2>
-                    <div id="memoryContext"></div>
-                </section>
+
             </aside>
             <main class="tree-view" id="treeView" aria-label="Conversation tree visualization">
                 <svg id="treeSvg" width="100%" height="100%" role="img" aria-label="Tree diagram"></svg>
@@ -67,7 +64,9 @@
                     <button type="button" data-action="check-summaries">Revisar Resúmenes</button>
                     <button type="button" data-action="export">Export</button>
                     <button type="button" data-action="import">Import</button>
+                    <button type="button" data-action="transform-json">Transform JSON</button>
                     <input type="file" id="importFile" accept="application/json" hidden />
+                    <input type="file" id="transformFile" accept="application/json" hidden />
                 </div>
                 <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
                     <div class="info-panel-header">
