@@ -40,4 +40,15 @@ export const SELECTORS = {
   nodeInfo: '#nodeInfo',
   statusBar: '#statusBar',
   modelSelector: '#modelSelector',
+  treeView: '#treeView',
+  chatView: '#chatView',
+  chatMessageForm: '#chatMessageForm',
+  chatMessageInput: '#chatMessageInput',
+  currentBranchInfo: '#currentBranchInfo',
+};
+
+// Modos de vista disponibles
+export const VIEW_MODES = {
+  TREE: 'tree',
+  CHAT: 'chat'
 };

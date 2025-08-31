@@ -3,13 +3,15 @@
  * Manejo de toda la lógica de interfaz de usuario y eventos.
  */
 
-import { SELECTORS, SUMMARY_INTERVAL_MS } from './constants.js';
+import { SELECTORS, SUMMARY_INTERVAL_MS, VIEW_MODES } from './constants.js';
 import { escapeHTML, truncate, setStatus, clearStatus, debounce } from './utils.js';
 
 export class UIManager {
   constructor(tree, renderer) {
     this.tree = tree;
     this.renderer = renderer;
+    this.currentViewMode = VIEW_MODES.TREE;
+    this.chatBranches = new Map(); // Para rastrear ramas paralelas en cada posición
   }
 
   updateSidebar() {
@@ -231,6 +233,349 @@ export class UIManager {
     setTimeout(() => {
       this.updateVisualization();
     }, 350);
+  }
+
+  toggleViewMode() {
+    const newMode = this.currentViewMode === VIEW_MODES.TREE ? VIEW_MODES.CHAT : VIEW_MODES.TREE;
+    this.setViewMode(newMode);
+  }
+
+  setViewMode(mode) {
+    this.currentViewMode = mode;
+    
+    const treeView = document.querySelector(SELECTORS.treeView);
+    const chatView = document.querySelector(SELECTORS.chatView);
+    const viewButton = document.querySelector('[data-action="change-view-mode"]');
+    
+    // Conservar el nodo actual para mantener el foco
+    const currentNodeId = this.tree.currentNodeId;
+    
+    if (mode === VIEW_MODES.CHAT) {
+      // Cambiar a vista de chat
+      treeView.hidden = true;
+      chatView.hidden = false;
+      if (viewButton) viewButton.textContent = 'Vista Chat';
+      
+      // Asegurar que el nodo actual se mantiene al renderizar chat
+      if (currentNodeId) {
+        this.tree.currentNodeId = currentNodeId;
+      }
+      this.renderChatView();
+      console.log(`💬 Switched to chat view (focused on: ${currentNodeId})`);
+    } else {
+      // Cambiar a vista de árbol
+      treeView.hidden = false;
+      chatView.hidden = true;
+      if (viewButton) viewButton.textContent = 'Vista Árbol';
+      
+      // Asegurar que el nodo actual se mantiene al actualizar árbol
+      if (currentNodeId) {
+        this.tree.currentNodeId = currentNodeId;
+      }
+      this.updateVisualization();
+      this.updateSidebar(); // Actualizar sidebar para mostrar el path correcto
+      console.log(`🌳 Switched to tree view (focused on: ${currentNodeId})`);
+    }
+  }
+
+  renderChatView() {
+    if (!this.tree || !this.tree.currentNodeId) return;
+    
+    console.log(`🔄 renderChatView called with currentNodeId: ${this.tree.currentNodeId}`);
+    
+    const chatMessages = document.querySelector('#chatMessages');
+    if (!chatMessages) return;
+    
+    // Obtener el path desde la raíz hasta el nodo actual, luego extender hasta todas las hojas
+    const fullBranch = this.getFullBranchFromNode(this.tree.currentNodeId);
+    
+    console.log(`🌿 Full branch:`, fullBranch.map(n => n.id));
+    
+    chatMessages.innerHTML = '';
+    this.chatBranches.clear();
+    
+    // Renderizar cada mensaje en la rama
+    fullBranch.forEach((node, index) => {
+      const messageEl = this.createChatMessage(node, index, fullBranch);
+      chatMessages.appendChild(messageEl);
+    });
+    
+    console.log(`📦 Rendered ${fullBranch.length} messages to chat view`);
+    
+    // Actualizar información del nodo actual para el input
+    this.updateChatBranchInfo();
+    
+    // Centrar en el nodo actual en lugar de ir al final
+    setTimeout(() => {
+      console.log(`⏰ About to scroll to current node: ${this.tree.currentNodeId}`);
+      this.scrollToNodeInChat(this.tree.currentNodeId);
+    }, 50);
+  }
+
+  updateChatBranchInfo() {
+    const branchInfo = document.querySelector(SELECTORS.currentBranchInfo);
+    if (!branchInfo || !this.tree.currentNodeId) return;
+    
+    // Encontrar el último nodo de la rama (donde se expandirá)
+    const fullBranch = this.getFullBranchFromNode(this.tree.currentNodeId);
+    const lastNode = fullBranch[fullBranch.length - 1];
+    
+    if (lastNode) {
+      branchInfo.textContent = `Expandiendo desde: ${lastNode.id}`;
+    }
+  }
+
+  async addChatMessage() {
+    const input = document.querySelector(SELECTORS.chatMessageInput);
+    if (!input) {
+      console.error('Chat message input not found');
+      return;
+    }
+
+    const content = input.value.trim();
+    if (!content) {
+      console.log('Empty chat message, skipping');
+      return;
+    }
+
+    console.log('Adding chat message:', content.substring(0, 50));
+
+    try {
+      setStatus('Añadiendo mensaje al chat…');
+      
+      // Encontrar el último nodo de la rama actual para usarlo como padre
+      const fullBranch = this.getFullBranchFromNode(this.tree.currentNodeId);
+      const lastNode = fullBranch[fullBranch.length - 1];
+      const parentId = lastNode ? lastNode.id : this.tree.currentNodeId;
+      
+      console.log(`Adding message with parent: ${parentId}`);
+      
+      // Agregar el nodo del usuario
+      const userNodeId = await this.tree.addNode(content, parentId, false, false);
+      
+      // Actualizar el nodo actual al nuevo mensaje de usuario
+      this.tree.currentNodeId = userNodeId;
+      
+      // Re-renderizar la vista de chat
+      this.renderChatView();
+      
+      // Limpiar input
+      input.value = '';
+      
+      setStatus('Generando respuesta IA…');
+      
+      // Generar respuesta de IA
+      this.tree.generateAIResponse().then((reply) => {
+        setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA');
+        console.log('Chat message flow completed successfully');
+        // Re-renderizar después de la respuesta IA
+        this.renderChatView();
+        // Scroll al final de la conversación
+        setTimeout(() => {
+          const chatMessages = document.querySelector('#chatMessages');
+          if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }, 100);
+        setTimeout(clearStatus, 4000);
+      }).catch((err) => {
+        console.error('AI response error in chat', err);
+        setStatus('Error IA: ' + (err.message ?? 'desconocido'));
+        setTimeout(clearStatus, 4000);
+      });
+
+      // Reenfocar input
+      input.focus();
+      console.log('Chat message processed, UI remains interactive');
+    } catch (err) {
+      console.error('Error adding chat message:', err);
+      setStatus('Error: ' + (err.message ?? 'desconocido'));
+      setTimeout(clearStatus, 4000);
+    }
+  }
+
+  getFullBranchFromNode(nodeId) {
+    // Primero obtener el path hasta el nodo seleccionado
+    const pathToNode = this.tree.getPathToNode(nodeId);
+    const result = [];
+    
+    // Agregar todos los nodos del path
+    for (const id of pathToNode) {
+      const node = this.tree.nodes.get(id);
+      if (node) result.push(node);
+    }
+    
+    // Luego, desde el nodo seleccionado, seguir el primer hijo hasta llegar a una hoja
+    let currentNode = this.tree.nodes.get(nodeId);
+    while (currentNode && currentNode.children && currentNode.children.length > 0) {
+      // Tomar el primer hijo por defecto
+      const firstChild = this.tree.nodes.get(currentNode.children[0]);
+      if (firstChild && !result.find(n => n.id === firstChild.id)) {
+        result.push(firstChild);
+      }
+      currentNode = firstChild;
+    }
+    
+    return result;
+  }
+
+  createChatMessage(node, index, fullBranch) {
+    const messageDiv = document.createElement('div');
+    const isCurrentNode = node.id === this.tree.currentNodeId;
+    messageDiv.className = `chat-message ${node.role || (node.isAI ? 'assistant' : 'user')} ${isCurrentNode ? 'current-node' : ''}`;
+    messageDiv.dataset.nodeId = node.id;
+    
+    // Buscar hermanos (nodos con el mismo padre)
+    const siblings = this.findSiblings(node.id, fullBranch);
+    const currentSiblingIndex = siblings.indexOf(node.id);
+    
+    const timestamp = new Date(node.timestamp).toLocaleTimeString();
+    
+    messageDiv.innerHTML = `
+      <div class="message-header">
+        <span class="message-role">${node.role === 'user' ? 'Tú' : 'Asistente'}</span>
+        <span class="node-id ${isCurrentNode ? 'current' : ''}">${node.id}</span>
+        <span class="message-timestamp">${timestamp}</span>
+      </div>
+      <div class="message-bubble">
+        ${escapeHTML(node.content)}
+      </div>
+      ${siblings.length > 1 ? this.createBranchNavigation(siblings, currentSiblingIndex, index, fullBranch) : ''}
+    `;
+    
+    return messageDiv;
+  }
+
+  findSiblings(nodeId, fullBranch) {
+    const node = this.tree.nodes.get(nodeId);
+    if (!node || !node.parentId) return [nodeId];
+    
+    const parent = this.tree.nodes.get(node.parentId);
+    if (!parent || !parent.children) return [nodeId];
+    
+    return parent.children;
+  }
+
+  createBranchNavigation(siblings, currentIndex, messageIndex, fullBranch) {
+    const totalSiblings = siblings.length;
+    
+    return `
+      <div class="branch-navigation">
+        <button class="branch-nav-btn" 
+                onclick="window._ctree.uiManager.navigateToBranch(${messageIndex}, ${currentIndex - 1}, '${siblings.join(',')}')"
+                ${currentIndex === 0 ? 'disabled' : ''}>
+          ←
+        </button>
+        <span class="branch-indicator">${currentIndex + 1}/${totalSiblings}</span>
+        <button class="branch-nav-btn"
+                onclick="window._ctree.uiManager.navigateToBranch(${messageIndex}, ${currentIndex + 1}, '${siblings.join(',')}')"
+                ${currentIndex === totalSiblings - 1 ? 'disabled' : ''}>
+          →
+        </button>
+      </div>
+    `;
+  }
+
+  navigateToBranch(messageIndex, newSiblingIndex, siblingsStr) {
+    const siblings = siblingsStr.split(',');
+    const newNodeId = siblings[newSiblingIndex];
+    
+    if (!newNodeId) return;
+    
+    console.log(`🔄 Navigating to branch: ${newNodeId} from siblings: [${siblings.join(', ')}]`);
+    
+    // Obtener el nodo padre (donde están las flechas) para centrar la vista ahí
+    const newNode = this.tree.nodes.get(newNodeId);
+    const parentNodeId = newNode?.parentId;
+    
+    console.log(`📋 New node: ${newNodeId}, Parent: ${parentNodeId}`);
+    console.log(`📋 New node object:`, newNode);
+    
+    // Verificar que el nodo padre existe
+    const parentNode = parentNodeId ? this.tree.nodes.get(parentNodeId) : null;
+    console.log(`📋 Parent node object:`, parentNode);
+    
+    // Actualizar el nodo actual para reflejar la nueva rama seleccionada
+    this.tree.currentNodeId = newNodeId;
+    
+    // Re-renderizar la vista de chat
+    this.renderChatView();
+    
+    // Centrar en el nodo padre (donde están las opciones con flechas)
+    setTimeout(() => {
+      if (parentNodeId && parentNode) {
+        console.log(`📍 Attempting to center on parent node: ${parentNodeId}`);
+        // FIJO: Verificar que el elemento del padre existe en el contenedor de chat
+        const chatMessages = document.querySelector('#chatMessages');
+        const parentElement = chatMessages ? chatMessages.querySelector(`[data-node-id="${parentNodeId}"]`) : null;
+        console.log(`📍 Parent element found in chat:`, parentElement);
+        
+        if (parentElement) {
+          // Centrar en el padre, pero highlight el hijo que cambió
+          this.scrollToNodeInChat(parentNodeId, newNodeId);
+          console.log(`📍 Successfully centered on parent node: ${parentNodeId} (child changed to: ${newNodeId})`);
+        } else {
+          console.log(`❌ Parent element not found in chat DOM, falling back to child node`);
+          this.scrollToNodeInChat(newNodeId);
+        }
+      } else {
+        // Fallback: centrar en el nodo seleccionado si no hay padre
+        console.log(`❌ No parent found or parent doesn't exist, centering on: ${newNodeId}`);
+        this.scrollToNodeInChat(newNodeId);
+      }
+    }, 150); // Aumentar delay para asegurar que el DOM esté completamente renderizado
+  }
+
+  scrollToNodeInChat(nodeId, highlightNodeId = null) {
+    console.log(`🎯 scrollToNodeInChat called with nodeId: ${nodeId}, highlightNodeId: ${highlightNodeId}`);
+    
+    const chatMessages = document.querySelector('#chatMessages');
+    // FIJO: Buscar solo dentro del contenedor de chat, no en todo el documento
+    const targetMessage = chatMessages ? chatMessages.querySelector(`[data-node-id="${nodeId}"]`) : null;
+    
+    console.log(`🎯 chatMessages container:`, chatMessages);
+    console.log(`🎯 targetMessage element:`, targetMessage);
+    
+    if (!chatMessages || !targetMessage) {
+      console.log(`❌ Missing elements - chatMessages: ${!!chatMessages}, targetMessage: ${!!targetMessage}`);
+      return;
+    }
+    
+    // Calcular la posición para centrar el mensaje
+    const containerHeight = chatMessages.clientHeight;
+    const messageTop = targetMessage.offsetTop;
+    const messageHeight = targetMessage.offsetHeight;
+    
+    console.log(`📏 Container height: ${containerHeight}, Message top: ${messageTop}, Message height: ${messageHeight}`);
+    
+    // Centrar el mensaje en la vista
+    const scrollTop = messageTop - (containerHeight / 2) + (messageHeight / 2);
+    
+    console.log(`📏 Calculated scrollTop: ${scrollTop}`);
+    
+    // Scroll suave al mensaje seleccionado
+    chatMessages.scrollTo({
+      top: Math.max(0, scrollTop),
+      behavior: 'smooth'
+    });
+    
+    console.log(`📍 Scrolled to position: ${Math.max(0, scrollTop)}`);
+    
+    // Animación temporal para destacar el nodo que cambió (si se especifica)
+    const nodeToHighlight = highlightNodeId || nodeId;
+    // FIJO: Buscar elemento de highlight solo en el contenedor de chat
+    const highlightMessage = chatMessages ? chatMessages.querySelector(`[data-node-id="${nodeToHighlight}"]`) : null;
+    
+    console.log(`✨ Highlighting node: ${nodeToHighlight}, element:`, highlightMessage);
+    
+    if (highlightMessage) {
+      highlightMessage.classList.add('highlight-navigation');
+      setTimeout(() => {
+        highlightMessage.classList.remove('highlight-navigation');
+      }, 1500);
+    }
+    
+    console.log(`📍 Centered chat view on node: ${nodeId}${highlightNodeId ? ` (highlighted: ${highlightNodeId})` : ''}`);
   }
 
   exportTree() {
@@ -459,7 +804,11 @@ export class UIManager {
   }
 
   updateAll() {
-    this.updateVisualization();
+    if (this.currentViewMode === VIEW_MODES.CHAT) {
+      this.renderChatView();
+    } else {
+      this.updateVisualization();
+    }
     this.updateSidebar();
   }
 
@@ -540,6 +889,8 @@ export class UIManager {
   bindUI() {
     const form = document.querySelector(SELECTORS.messageForm);
     const input = document.querySelector(SELECTORS.messageInput);
+    const chatForm = document.querySelector(SELECTORS.chatMessageForm);
+    const chatInput = document.querySelector(SELECTORS.chatMessageInput);
     const importFile = document.querySelector(SELECTORS.importFile);
     const transformFile = document.querySelector('#transformFile');
     const controls = document.querySelector(SELECTORS.controls);
@@ -552,6 +903,16 @@ export class UIManager {
     });
 
     input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') e.target.blur();
+    });
+
+    // Chat form event handling
+    chatForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.addChatMessage();
+    });
+
+    chatInput?.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') e.target.blur();
     });
 
@@ -590,6 +951,7 @@ export class UIManager {
       else if (action === 'import') importFile?.click();
       else if (action === 'transform-json') transformFile?.click();
       else if (action === 'change-view') this.toggleGlobalView();
+      else if (action === 'change-view-mode') this.toggleViewMode();
       else if (action === 'check-summaries') this.checkSummaries();
     });
   }

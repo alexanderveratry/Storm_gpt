@@ -61,10 +61,41 @@
                 </form>
 
             </aside>
-            <main class="tree-view" id="treeView" aria-label="Conversation tree visualization">
-                <svg id="treeSvg" width="100%" height="100%" role="img" aria-label="Tree diagram"></svg>
+            <main class="main-view">
+                <!-- Vista de Árbol -->
+                <div class="tree-view" id="treeView" aria-label="Conversation tree visualization">
+                    <svg id="treeSvg" width="100%" height="100%" role="img" aria-label="Tree diagram"></svg>
+                    <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
+                        <div class="info-panel-header">
+                            <h2>Node Info</h2>
+                            <button type="button" class="close-btn" id="closeInfoPanel" aria-label="Close node info panel">✕</button>
+                        </div>
+                        <div id="nodeInfo"></div>
+                    </div>
+                </div>
+                
+                <!-- Vista de Chat -->
+                <div class="chat-view" id="chatView" hidden aria-label="Linear chat visualization">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area" id="chatInputArea">
+                        <form id="chatMessageForm" class="chat-input-form" autocomplete="off">
+                            <div class="chat-input-wrapper">
+                                <input id="chatMessageInput" name="chatMessage" type="text" placeholder="Continúa la conversación..." aria-required="true" />
+                                <button type="submit" id="chatSendBtn" class="chat-send-btn">
+                                    <span>→</span>
+                                </button>
+                            </div>
+                            <div class="chat-input-info">
+                                <span class="current-branch-info" id="currentBranchInfo">Expandiendo desde: node_X</span>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Controles Compartidos -->
                 <div class="controls" role="group" aria-label="Visualization controls">
                     <button type="button" data-action="change-view">CHANGE VIEW</button>
+                    <button type="button" data-action="change-view-mode">Vista Árbol</button>
                     <button type="button" data-action="reset-view" hidden="True">Reset View (in dev)</button> 
                     <button type="button" data-action="check-summaries">Revisar Resúmenes</button>
                     <button type="button" data-action="export">Export</button>
@@ -72,13 +103,6 @@
                     <button type="button" data-action="transform-json">Transform JSON</button>
                     <input type="file" id="importFile" accept="application/json" hidden />
                     <input type="file" id="transformFile" accept="application/json" hidden />
-                </div>
-                <div class="info-panel" id="infoPanel" hidden aria-live="polite" aria-hidden="true">
-                    <div class="info-panel-header">
-                        <h2>Node Info</h2>
-                        <button type="button" class="close-btn" id="closeInfoPanel" aria-label="Close node info panel">✕</button>
-                    </div>
-                    <div id="nodeInfo"></div>
                 </div>
             </main>
         </div>

@@ -121,6 +121,12 @@ class UIManager {
   onTransformFile()              // Maneja la selección y transformación de archivos
   checkSummaries()               // Revisa y genera resúmenes faltantes
   toggleSidebar()                // Expande/contrae el panel lateral con animación
+  toggleViewMode()               // Alterna entre vista árbol y chat
+  setViewMode()                  // Establece modo de vista específico
+  renderChatView()               // Renderiza vista de chat lineal con burbujas
+  navigateToBranch()             // Navega entre ramas paralelas en vista chat
+  addChatMessage()               // Añade mensajes desde la vista de chat
+  updateChatBranchInfo()         // Actualiza información del nodo de expansión
 }
 ```
 
@@ -163,13 +169,33 @@ Escribe nuevo mensaje →
 Nueva rama creada desde ese punto
 ```
 
-### 3. Navegación
+### 3. Navegación en Vista Árbol
 ```
 Click en nodo → 
 Nodo se vuelve activo → 
 Path actualizado en sidebar → 
 Contexto relevante recalculado
 ```
+
+### 4. Vista de Chat Lineal
+```
+Click en "Vista Chat" → 
+Se muestra rama completa como conversación → 
+Burbujas estilo ChatGPT/Claude → 
+Navegación con flechas ← → entre ramas paralelas
+```
+
+#### Características de la Vista Chat:
+- **Selección de Rama**: Al seleccionar un nodo en vista árbol, la vista chat muestra desde la raíz hasta todas las hojas de esa rama
+- **Navegación de Ramas**: Cuando hay múltiples respuestas al mismo mensaje (nodos hermanos), aparecen flechas ← → para navegar entre ellas
+- **Indicador de Posición**: Se muestra "2/4" para indicar qué respuesta alternativa se está viendo
+- **Burbujas Diferenciadas**: Mensajes de usuario (verde, alineados a la derecha) y asistente (gris, alineados a la izquierda)
+- **IDs de Nodos**: Cada mensaje muestra su identificador (node_1, node_2, etc.) con destacado especial para el nodo actual
+- **Nodo Actual Resaltado**: El nodo seleccionado se resalta con borde verde brillante y glow
+- **Timestamps**: Cada mensaje muestra la hora de creación
+- **Persistencia de Foco**: Al cambiar entre vistas, se mantiene el nodo seleccionado
+- **Expansión de Conversación**: Input al final de la vista para continuar la conversación desde el último nodo
+- **Información Contextual**: Muestra desde qué nodo se expandirá la conversación
 
 ## 📊 Algoritmos Clave
 
@@ -236,6 +262,8 @@ function relevanceScore(node, target, proximity) {
 - **Tooltips**: Cajas flotantes con fondo semi-transparente
 - **Sidebar**: Panel izquierdo con chat history (expandible/contraíble)
 - **Botón Toggle**: Círculo verde ‹ para contraer/expandir sidebar con animación suave
+- **Vista Chat**: Interfaz lineal estilo ChatGPT/Claude con burbujas diferenciadas
+- **Navegación de Ramas**: Flechas ← → para alternar entre respuestas paralelas
 
 ## 🔄 Sistema de Persistencia
 
@@ -336,12 +364,15 @@ npm start                   # Iniciar servidor
 
 ### Controles Disponibles:
 
-1. **CHANGE VIEW**: Alterna entre vista de resumen y contenido completo
-2. **Revisar Resúmenes**: Genera resúmenes para nodos que no los tengan
-3. **Export**: Descarga el árbol actual en formato JSON
-4. **Import**: Carga un archivo JSON con formato de la aplicación
-5. **Transform JSON**: Convierte archivos JSON externos al formato interno
-6. **Toggle Sidebar**: Botón ‹ en el sidebar para expandir/contraer el panel lateral
+1. **CHANGE VIEW**: Alterna entre vista de resumen y contenido completo (solo en modo árbol)
+2. **Vista Árbol/Chat**: Alterna entre visualización de árbol y chat lineal
+3. **Revisar Resúmenes**: Genera resúmenes para nodos que no los tengan
+4. **Export**: Descarga el árbol actual en formato JSON
+5. **Import**: Carga un archivo JSON con formato de la aplicación
+6. **Transform JSON**: Convierte archivos JSON externos al formato interno
+7. **Toggle Sidebar**: Botón ‹ en el sidebar para expandir/contraer el panel lateral
+
+**Nota**: Los botones "CHANGE VIEW" y "Vista Árbol/Chat" son independientes y cumplen funciones diferentes.
 
 ### Atajos de Teclado:
 

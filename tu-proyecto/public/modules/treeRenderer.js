@@ -1,14 +1,6 @@
 /*
  * treeRenderer.js — D3.js Tree Visualization
- * Renderizado del árbol conversacional usand      })
-      // removed dblclick reset and tooltip functionality for better accessibility
-      .attr('aria-label', (d) => {
-        const content = d.content || '';
-        const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
-        return `Node: ${truncated}`;
-      })
-      .attr('title', (d) => d.content || '')
-      .attr('transform', (d) => `translate(${this._posX(d)},${this._posY(d)})`)s.
+ * Renderizado del árbol conversacional usando D3.js
  */
 
 import { LAYOUT, ZOOM_EXTENT, SELECTORS } from './constants.js';
@@ -102,10 +94,13 @@ export class TreeRenderer {
           showNodeInfo(d);
         }
       })
-      // removed dblclick reset
-      .on('mouseover', (ev, d) => this._showTooltip(ev, d))
-      .on('mousemove', (ev) => this._moveTooltip(ev))
-      .on('mouseout', () => this._hideTooltip())
+      // accessibility and tooltip using native title attribute
+      .attr('aria-label', (d) => {
+        const content = d.content || '';
+        const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
+        return `Node: ${truncated}`;
+      })
+      .attr('title', (d) => d.content || '')
       .attr('transform', (d) => `translate(${this._posX(d)},${this._posY(d)})`);
 
     nodeG
