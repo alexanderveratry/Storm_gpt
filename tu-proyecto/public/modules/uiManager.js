@@ -3,7 +3,7 @@
  * Manejo de toda la lógica de interfaz de usuario y eventos.
  */
 
-import { SELECTORS, SUMMARY_INTERVAL_MS, VIEW_MODES } from './constants.js';
+import { SELECTORS, SUMMARY_INTERVAL_MS, VIEW_MODES, CONTENT_VIEW_MODES } from './constants.js';
 import { escapeHTML, truncate, setStatus, clearStatus, debounce } from './utils.js';
 
 export class UIManager {
@@ -17,44 +17,120 @@ export class UIManager {
   updateSidebar() {
     const chat = document.querySelector(SELECTORS.chatArea);
     if (!chat) return;
-    chat.innerHTML = '';
-
-    const path = this.tree.getPathToNode(this.tree.currentNodeId);
-    for (const id of path) {
-      const n = this.tree.nodes.get(id);
-      const wrap = document.createElement('div');
-      wrap.className = `message ${id === this.tree.currentNodeId ? 'active' : ''}`;
-      wrap.tabIndex = 0;
-
-      let summary = n.summary;
-      if (!summary) summary = n.summaryGenerating ? 'Generando…' : truncate(n.content, 160);
-
-      // Check current view state for this node
-      const showFull = this.tree.getEffectiveViewState(id);
-      const toggleButtonText = showFull ? '🔁 View' : '🔁View';
-
-      wrap.innerHTML = `
-        <div class="msg-summary" data-full="${showFull ? '1' : '0'}">
-          <div class="summary-text" ${showFull ? 'hidden' : ''}>${escapeHTML(truncate(summary, 300))}</div>
-          <div class="full-text" ${showFull ? '' : 'hidden'}>${escapeHTML(n.content)}</div>
+    
+    // Header with title
+    chat.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: var(--color-accent); font-size: 1.2rem; font-weight: 600; border-bottom: 1px solid var(--color-border);">
+        Conversaciones Storm GPT
+      </div>
+      <div id="savedChatsList" style="padding: 10px; max-height: calc(100% - 80px); overflow-y: auto;">
+        <div style="text-align: center; color: #888; padding: 20px;">
+          Cargando chats guardados...
         </div>
-        <div class="message-actions">
-          <button class="copy-btn" data-action="copy" data-id="${id}">Copy</button>
-          <button class="regen-btn" data-action="regen" data-id="${id}">Regen</button>
-          <button class="toggle-btn" data-action="toggle" data-id="${id}">${toggleButtonText}</button>
-        </div>`;
+      </div>
+    `;
+    
+    // Load saved chats
+    this.loadSavedChats();
+  }
 
-      wrap.addEventListener('click', (ev) => {
-        if (ev.target.closest('.message-actions')) return;
-        this.tree.currentNodeId = id;
-        this.updateAll();
+  async loadSavedChats() {
+    try {
+      const response = await fetch('/api/saved-chats');
+      const result = await response.json();
+      
+      const chatsList = document.getElementById('savedChatsList');
+      if (!chatsList) return;
+
+      if (!result.chats || result.chats.length === 0) {
+        chatsList.innerHTML = `
+          <div style="text-align: center; color: #888; padding: 20px;">
+            No hay chats guardados aún
+          </div>
+        `;
+        return;
+      }
+
+      // Generate list of saved chats
+      const chatsHTML = result.chats.map(chat => {
+        const date = new Date(chat.modified).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        return `
+          <div class="saved-chat-item" data-filename="${chat.filename}" style="
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--color-panel);
+          ">
+            <div style="font-weight: 600; color: var(--color-text); margin-bottom: 4px;">
+              ${escapeHTML(chat.displayName)}
+            </div>
+            <div style="font-size: 0.8rem; color: #888;">
+              ${date}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      chatsList.innerHTML = chatsHTML;
+
+      // Add click handlers for loading chats
+      chatsList.querySelectorAll('.saved-chat-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const filename = item.dataset.filename;
+          this.loadSavedChat(filename);
+        });
+        
+        // Hover effects
+        item.addEventListener('mouseenter', () => {
+          item.style.backgroundColor = 'var(--color-hover)';
+          item.style.borderColor = 'var(--color-accent)';
+        });
+        
+        item.addEventListener('mouseleave', () => {
+          item.style.backgroundColor = 'var(--color-panel)';
+          item.style.borderColor = 'var(--color-border)';
+        });
       });
 
-      chat.appendChild(wrap);
+    } catch (error) {
+      console.error('Error loading saved chats:', error);
+      const chatsList = document.getElementById('savedChatsList');
+      if (chatsList) {
+        chatsList.innerHTML = `
+          <div style="text-align: center; color: #ff6b6b; padding: 20px;">
+            Error al cargar chats guardados
+          </div>
+        `;
+      }
     }
+  }
 
-    chat.addEventListener('click', (e) => this.onChatAction(e), { once: true });
-    chat.scrollTop = chat.scrollHeight;
+  async loadSavedChat(filename) {
+    try {
+      const response = await fetch(`/api/saved-chats/${filename}`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Import the chat data using the correct method
+        await this.tree.loadExportedNodes(result.data.nodes);
+        this.updateAll();
+        console.log(`📂 Loaded saved chat: ${filename}`);
+      } else {
+        console.error('Failed to load chat:', result.error);
+      }
+    } catch (error) {
+      console.error('Error loading saved chat:', error);
+    }
   }
 
   onChatAction(e) {
@@ -149,14 +225,29 @@ export class UIManager {
     if (!this.tree) return;
     
     const currentMode = this.tree.getGlobalViewMode();
-    const newMode = currentMode === 'summary' ? 'content' : 'summary';
+    let newMode;
+    
+    // Ciclar entre los tres modos: summary -> content -> stickers -> summary
+    if (currentMode === 'summary') {
+      newMode = 'content';
+    } else if (currentMode === 'content') {
+      newMode = 'stickers';
+    } else {
+      newMode = 'summary';
+    }
     
     this.tree.setGlobalViewMode(newMode);
     
     // Update the button text to show current state
     const button = document.querySelector('[data-action="change-view"]');
     if (button) {
-      button.textContent = newMode === 'summary' ? 'CHANGE VIEW (Summary)' : 'CHANGE VIEW (Content)';
+      if (newMode === 'summary') {
+        button.textContent = 'CHANGE VIEW (Summary)';
+      } else if (newMode === 'content') {
+        button.textContent = 'CHANGE VIEW (Content)';
+      } else if (newMode === 'stickers') {
+        button.textContent = 'CHANGE VIEW (Stickers)';
+      }
     }
     
     // Update all visualizations
@@ -172,8 +263,23 @@ export class UIManager {
     if (!panel || !info || !closeBtn) return;
 
     const node = this.tree.nodes.get(nodeData.id);
-    info.innerHTML = `
-      <div class="node-content-display">${escapeHTML(node.content)}</div>`;
+    
+    // Build info content with sticker support
+    let infoContent = `<div class="node-content-display">${escapeHTML(node.content)}</div>`;
+    
+    // Add sticker display if available
+    if (node.image) {
+      infoContent += `
+        <div class="node-sticker">
+          <img src="${node.image}" alt="Generated sticker" />
+          <div class="sticker-info">Prompt: "${node.imagePrompt || 'N/A'}"</div>
+        </div>`;
+    }
+    
+    info.innerHTML = infoContent;
+    
+    // Update sticker buttons
+    this.updateStickerButtons(nodeData.id);
     
     // Store the originating element for focus return
     panel.dataset.originatingNodeId = nodeData.id;
@@ -236,7 +342,15 @@ export class UIManager {
   }
 
   toggleViewMode() {
-    const newMode = this.currentViewMode === VIEW_MODES.TREE ? VIEW_MODES.CHAT : VIEW_MODES.TREE;
+    // Cycle through: TREE -> CHAT -> STICKERS -> TREE
+    let newMode;
+    if (this.currentViewMode === VIEW_MODES.TREE) {
+      newMode = VIEW_MODES.CHAT;
+    } else if (this.currentViewMode === VIEW_MODES.CHAT) {
+      newMode = 'STICKERS';
+    } else {
+      newMode = VIEW_MODES.TREE;
+    }
     this.setViewMode(newMode);
   }
 
@@ -245,14 +359,19 @@ export class UIManager {
     
     const treeView = document.querySelector(SELECTORS.treeView);
     const chatView = document.querySelector(SELECTORS.chatView);
+    const stickersView = document.querySelector('#stickersView');
     const viewButton = document.querySelector('[data-action="change-view-mode"]');
     
     // Conservar el nodo actual para mantener el foco
     const currentNodeId = this.tree.currentNodeId;
     
+    // Hide all views first
+    treeView.hidden = true;
+    chatView.hidden = true;
+    if (stickersView) stickersView.hidden = true;
+    
     if (mode === VIEW_MODES.CHAT) {
       // Cambiar a vista de chat
-      treeView.hidden = true;
       chatView.hidden = false;
       if (viewButton) viewButton.textContent = 'Vista Chat';
       
@@ -262,10 +381,9 @@ export class UIManager {
       }
       this.renderChatView();
       console.log(`💬 Switched to chat view (focused on: ${currentNodeId})`);
-    } else {
+    }  else {
       // Cambiar a vista de árbol
       treeView.hidden = false;
-      chatView.hidden = true;
       if (viewButton) viewButton.textContent = 'Vista Árbol';
       
       // Asegurar que el nodo actual se mantiene al actualizar árbol
@@ -578,7 +696,7 @@ export class UIManager {
     console.log(`📍 Centered chat view on node: ${nodeId}${highlightNodeId ? ` (highlighted: ${highlightNodeId})` : ''}`);
   }
 
-  exportTree() {
+  async exportTree() {
     const data = {
       version: 1,
       exportedAt: new Date().toISOString(),
@@ -589,8 +707,11 @@ export class UIManager {
         timestamp: n.timestamp,
         summary: n.summary ?? null,
         keywords: n.keywords ?? [],
+        sticker: n.image ?? "", // Incluir la URL del sticker
       })),
     };
+
+    // Download to user's computer
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -598,6 +719,31 @@ export class UIManager {
     a.download = 'conversational-tree.json';
     a.click();
     URL.revokeObjectURL(url);
+
+    // Also save to server
+    try {
+      const response = await fetch('/api/export-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: data,
+          filename: 'conversational-tree'
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        console.log(`💾 Chat automatically saved to server: ${result.filename}`);
+        // Refresh the saved chats list
+        this.loadSavedChats();
+      } else {
+        console.error('Failed to save chat to server:', result.error);
+      }
+    } catch (error) {
+      console.error('Error saving chat to server:', error);
+    }
   }
 
   async onImportFile(e) {
@@ -925,6 +1071,13 @@ export class UIManager {
     // Close button for info panel
     closeInfoBtn?.addEventListener('click', () => this.closeNodeInfo());
 
+    // Sticker buttons
+    const generateStickerBtn = document.querySelector('#generateStickerBtn');
+    const viewStickerBtn = document.querySelector('#viewStickerBtn');
+    
+    generateStickerBtn?.addEventListener('click', () => this.generateSticker());
+    viewStickerBtn?.addEventListener('click', () => this.viewSticker());
+
     // Keyboard support for closing info panel with Escape and sidebar toggle
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -942,12 +1095,12 @@ export class UIManager {
     });
 
     // removed "reset-view" action by request
-    controls?.addEventListener('click', (e) => {
+    controls?.addEventListener('click', async (e) => {
       const el = /** @type {HTMLElement} */ (e.target);
       if (!(el instanceof HTMLElement)) return;
       const action = el.dataset.action;
       if (!action) return;
-      if (action === 'export') this.exportTree();
+      if (action === 'export') await this.exportTree();
       else if (action === 'import') importFile?.click();
       else if (action === 'transform-json') transformFile?.click();
       else if (action === 'change-view') this.toggleGlobalView();
@@ -996,4 +1149,100 @@ export class UIManager {
       }
     }
   }
+
+  // Métodos para manejar stickers
+  updateStickerButtons(nodeId) {
+    const generateBtn = document.querySelector('#generateStickerBtn');
+    const viewBtn = document.querySelector('#viewStickerBtn');
+    if (!generateBtn || !viewBtn) return;
+
+    const node = this.tree.nodes.get(nodeId);
+    if (!node) return;
+
+    if (node.imageGenerating) {
+      generateBtn.disabled = true;
+      generateBtn.textContent = '⏳ Generando...';
+      viewBtn.style.display = 'none';
+    } else if (node.image) {
+      generateBtn.disabled = false;
+      generateBtn.textContent = '🔄 Regenerar Sticker';
+      viewBtn.style.display = 'inline-block';
+    } else {
+      generateBtn.disabled = false;
+      generateBtn.textContent = '🎨 Generar Sticker';
+      viewBtn.style.display = 'none';
+    }
+  }
+
+  async generateSticker() {
+    const panel = document.querySelector(SELECTORS.infoPanel);
+    const nodeId = panel?.dataset.originatingNodeId;
+    if (!nodeId) return;
+
+    console.log('🎨 Generating sticker for node:', nodeId);
+    
+    const success = await this.tree.generateImageForNode(nodeId);
+    if (success) {
+      // Refresh the node info panel to show the new sticker
+      const nodeData = { id: nodeId };
+      this.showNodeInfo(nodeData);
+      console.log('✅ Sticker generated and displayed');
+    } else {
+      console.error('❌ Failed to generate sticker');
+      // You could show an error message to the user here
+    }
+  }
+
+  viewSticker() {
+    const panel = document.querySelector(SELECTORS.infoPanel);
+    const nodeId = panel?.dataset.originatingNodeId;
+    if (!nodeId) return;
+
+    const node = this.tree.nodes.get(nodeId);
+    if (node?.image) {
+      // Open sticker in a modal or new window
+      const modal = document.createElement('div');
+      modal.className = 'sticker-modal';
+      modal.innerHTML = `
+        <div class="sticker-modal-content">
+          <button class="sticker-modal-close">✕</button>
+          <img src="${node.image}" alt="Generated sticker" />
+          <div class="sticker-modal-info">
+            <p><strong>Nodo:</strong> ${nodeId}</p>
+            <p><strong>Prompt:</strong> ${node.imagePrompt || 'N/A'}</p>
+          </div>
+        </div>
+      `;
+      
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.8); display: flex; align-items: center; 
+        justify-content: center; z-index: 10000;
+      `;
+      
+      const content = modal.querySelector('.sticker-modal-content');
+      content.style.cssText = `
+        background: var(--color-panel); padding: 20px; border-radius: 8px; 
+        max-width: 90%; max-height: 90%; position: relative; text-align: center;
+      `;
+      
+      const closeBtn = modal.querySelector('.sticker-modal-close');
+      closeBtn.style.cssText = `
+        position: absolute; top: 10px; right: 15px; background: none; 
+        border: none; font-size: 20px; color: var(--color-text); cursor: pointer;
+      `;
+      
+      const img = modal.querySelector('img');
+      img.style.cssText = 'max-width: 100%; max-height: 60vh; border-radius: 8px;';
+      
+      closeBtn.addEventListener('click', () => document.body.removeChild(modal));
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) document.body.removeChild(modal);
+      });
+      
+      document.body.appendChild(modal);
+    }
+  }
+
+
 }

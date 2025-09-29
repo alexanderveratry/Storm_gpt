@@ -5,18 +5,18 @@
 'use strict';
 
 // Imports de módulos
-import { SPLASH_DURATION, SUMMARY_INTERVAL_MS } from './modules/constants.js';
+import { SPLASH_DURATION, SUMMARY_INTERVAL_MS } from '../modules/constants.js';
 import { 
   isFreshAppLaunch, 
   markSplashShown, 
   initializeSplashScreen, 
   showMainApp 
-} from './modules/splashScreen.js';
-import { EnhancedConversationalTree } from './modules/conversationalTree.js';
-import { OpenAIIntegration } from './modules/openaiIntegration.js';
-import { TreeRenderer } from './modules/treeRenderer.js';
-import { UIManager } from './modules/uiManager.js';
-import { SELECTORS } from './modules/constants.js';
+} from '../modules/splashScreen.js';
+import { EnhancedConversationalTree } from '../modules/conversationalTree.js';
+import { OpenAIIntegration } from '../modules/openaiIntegration.js';
+import { TreeRenderer } from '../modules/treeRenderer.js';
+import { UIManager } from '../modules/uiManager.js';
+import { SELECTORS } from '../modules/constants.js';
 
 // Variables globales principales
 let tree;

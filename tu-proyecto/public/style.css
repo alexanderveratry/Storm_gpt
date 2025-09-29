@@ -3,7 +3,7 @@
   --color-bg: #101820;
   --color-panel: #232b38;
   --color-border: #444c5e;
-  --color-accent: #00ff88;
+  --color-accent: #cbff31;
   --color-accent-alt: #0077ff;
   --color-danger: #ff6b6b;
   --color-text: #f5f6fa;
@@ -358,7 +358,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   color: #003c7e;
   border-color: #64b5f6;
 }
-.copy-success { background-color:#00aa44 !important; }
+.copy-success { background-color:#cdff57 !important; }
 
 
 
@@ -730,7 +730,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 }
 .controls button[data-action="check-summaries"]:hover, 
 .controls button[data-action="check-summaries"]:focus-visible { 
-  background: #00cc66; 
+  background: #d1ff05; 
 }
 .controls button[data-action="check-summaries"]:disabled {
   background: #666;
@@ -811,6 +811,149 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   word-wrap: break-word;
   font-size: 1.1rem;
   color: var(--color-text);
+}
+
+/* Node Actions */
+.node-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: var(--color-accent);
+  color: var(--color-bg);
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn:hover {
+  background: #a6d629;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(203, 255, 49, 0.3);
+}
+
+.action-btn:disabled {
+  background: var(--color-border);
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Sticker Display */
+.node-sticker {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.node-sticker img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition-fast);
+}
+
+.node-sticker img:hover {
+  transform: scale(1.05);
+}
+
+.sticker-info {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+
+
+/* Sticker Modal */
+.sticker-modal-content img {
+  display: block;
+  margin: 0 auto 15px auto;
+}
+
+.sticker-modal-info {
+  color: var(--color-text);
+  text-align: left;
+  margin-top: 15px;
+}
+
+.sticker-modal-info p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.sticker-modal-info strong {
+  color: var(--color-accent);
+}
+
+/* Stickers en nodos del árbol */
+.label-box.sticker-mode {
+  padding: 8px !important;
+  background: var(--color-panel) !important;
+  border: 2px solid var(--color-accent) !important;
+}
+
+.sticker-container {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-sticker-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.sticker-caption {
+  font-size: 10px;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.2;
+  max-width: 120px;
+  word-wrap: break-word;
+}
+
+/* Placeholder para nodos sin sticker */
+.no-sticker-placeholder {
+  text-align: center;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.no-sticker-icon {
+  font-size: 24px;
+  opacity: 0.5;
+}
+
+.no-sticker-text {
+  font-size: 10px;
+  color: #888;
+  font-style: italic;
+}
+
+.label-box.no-sticker {
+  border: 2px dashed var(--color-border) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 /* D3 Node Styles */

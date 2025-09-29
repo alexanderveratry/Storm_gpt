@@ -138,10 +138,31 @@ export class TreeRenderer {
       })
       .html((d) => {
         const full = tree.nodes.get(d.id);
-        const showFull = tree.getEffectiveViewState(d.id);
+        const viewState = tree.getEffectiveViewState(d.id);
         
+        // Modo stickers: mostrar imagen si existe
+        if (viewState === 'stickers') {
+          if (full?.image) {
+            return `<div xmlns="http://www.w3.org/1999/xhtml" class="label-box sticker-mode">
+                      <div class="sticker-container">
+                        <img src="${full.image}" alt="Sticker" class="node-sticker-img" />
+                        <div class="sticker-caption">${escapeHTML(truncate(full.content, 50))}</div>
+                      </div>
+                    </div>`;
+          } else {
+            return `<div xmlns="http://www.w3.org/1999/xhtml" class="label-box sticker-mode no-sticker">
+                      <div class="no-sticker-placeholder">
+                        <div class="no-sticker-icon">🎨</div>
+                        <div class="no-sticker-text">Sin sticker</div>
+                        <div class="sticker-caption">${escapeHTML(truncate(full.content, 50))}</div>
+                      </div>
+                    </div>`;
+          }
+        }
+        
+        // Modos normales (summary/content)
         let displayText;
-        if (showFull) {
+        if (viewState === true) {
           // Show full content
           displayText = full?.content ?? '';
         } else {
@@ -152,7 +173,7 @@ export class TreeRenderer {
         }
         
         return `<div xmlns="http://www.w3.org/1999/xhtml" class="label-box">
-                  <div class="content-display">${escapeHTML(truncate(displayText, showFull ? 400 : 200))}</div>
+                  <div class="content-display">${escapeHTML(truncate(displayText, viewState === true ? 400 : 200))}</div>
                 </div>`;
       });
 

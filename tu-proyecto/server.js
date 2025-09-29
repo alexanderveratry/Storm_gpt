@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import OpenAI from 'openai';
 const MOCK = process.env.MOCK_OPENAI === 'true';
@@ -29,6 +30,10 @@ const client = new OpenAI({
 if (!process.env.OPENAI_API_KEY) {
   console.warn('[WARN] Falta OPENAI_API_KEY en .env');
 }
+
+// Configuración de Hugging Face para generación de imágenes
+const HF_TOKEN = process.env.HF_TOKEN || 'hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+const HF_API_URL = 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0';
 
 async function withRetries(fn, {tries=3, base=400} = {}) {
   let lastErr;
@@ -253,6 +258,255 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Hugging Face Text-to-Image API endpoint
+app.post('/api/generate-image', async (req, res) => {
+  try {
+    const { text, options = {}, nodeId } = req.body || {};
+    if (!text) {
+      return res.status(400).json({ error: 'Falta text para generar imagen' });
+    }
+
+    console.log('Sending request to Hugging Face with text:', text);
+
+    // Usar GPT-5 Nano para reducir el texto a un concepto clave
+    let cleanText;
+    try {
+      console.log('🧠 Using GPT-5 Nano to extract key concept from:', text);
+      
+      const conceptResponse = await withRetries(() =>
+        client.chat.completions.create({
+          model: 'gpt-5-nano',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Reduce el texto a 1-2 palabras clave que representen el concepto principal. Solo responde con las palabras clave, sin explicaciones. Ejemplos: "Camada: 2–5 gatitos" → "camada gatos", "¿Qué come un perro?" → "perro comida"' 
+            },
+            { role: 'user', content: text }
+          ],
+          temperature: 0.3,
+          max_tokens: 10
+        })
+      );
+      
+      cleanText = conceptResponse?.choices?.[0]?.message?.content?.trim() || text;
+      console.log('🎯 Key concept extracted:', cleanText);
+    } catch (error) {
+      console.error('❌ Error extracting concept, using fallback:', error.message);
+      // Fallback: usar método original si GPT falla
+      cleanText = text.trim().replace(/^(un|una|el|la)\s+/i, '');
+    }
+    
+    // Agregar contexto automáticamente al prompt para generar stickers
+    const enhancedPrompt = `imagen de un ${cleanText} animado simple, formato sticker cute`;
+    console.log('Enhanced prompt:', enhancedPrompt);
+
+    const payload = {
+      inputs: enhancedPrompt,
+      parameters: {
+        negative_prompt: options.negativePrompt || "",
+        num_inference_steps: options.steps || 20,
+        guidance_scale: options.guidanceScale || 7.5,
+        width: options.width || 512,
+        height: options.height || 512,
+      }
+    };
+
+    const resp = await fetch(HF_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${HF_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('Hugging Face response status:', resp.status);
+
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.log('Hugging Face error response:', errorText);
+      throw new Error(`Hugging Face API error: ${resp.status} ${resp.statusText} - ${errorText}`);
+    }
+
+    // La respuesta es un blob (imagen)
+    const imageBuffer = await resp.arrayBuffer();
+    
+    // Crear carpeta de stickers si no existe
+    const stickersDir = path.join(__dirname, 'public', 'stickers');
+    if (!fs.existsSync(stickersDir)) {
+      fs.mkdirSync(stickersDir, { recursive: true });
+    }
+    
+    // Generar nombre único para la imagen
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeName = cleanText.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    const fileName = `${nodeId || 'sticker'}_${safeName}_${timestamp}.jpg`;
+    const filePath = path.join(stickersDir, fileName);
+    
+    // Guardar imagen en disco
+    fs.writeFileSync(filePath, Buffer.from(imageBuffer));
+    
+    // URL relativa para acceder a la imagen
+    const stickerUrl = `/stickers/${fileName}`;
+    
+    console.log('Hugging Face success - image generated and saved:', filePath);
+    res.json({ 
+      output_url: stickerUrl, // Ahora devuelve la URL del archivo guardado
+      file_path: filePath,
+      success: true,
+      message: 'Imagen generada exitosamente',
+      prompt: text,
+      enhanced_prompt: enhancedPrompt
+    });
+  } catch (err) {
+    console.error('Hugging Face error:', err);
+    res.status(500).json({ error: 'Error llamando a Hugging Face', detail: err.message });
+  }
+});
+
+// Test endpoint to verify Hugging Face API
+app.post('/api/test-hf', async (_req, res) => {
+  try {
+    console.log('Testing Hugging Face API connection...');
+    
+    const payload = {
+      inputs: "imagen de un gato animado simple, formato sticker cute",
+      parameters: {
+        num_inference_steps: 10,
+        width: 256,
+        height: 256,
+      }
+    };
+
+    const resp = await fetch(HF_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${HF_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('Hugging Face test response status:', resp.status);
+
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.log('Hugging Face test error response:', errorText);
+      return res.status(resp.status).json({ 
+        error: 'Hugging Face API test failed', 
+        status: resp.status, 
+        statusText: resp.statusText,
+        response: errorText 
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Hugging Face API connection successful'
+    });
+  } catch (err) {
+    console.error('Hugging Face test error:', err);
+    res.status(500).json({ error: 'Hugging Face API test error', detail: err.message });
+  }
+});
+
+// Endpoint para exportar y guardar chats
+app.post('/api/export-chat', async (req, res) => {
+  try {
+    const { data, filename } = req.body;
+    
+    if (!data || !filename) {
+      return res.status(400).json({ error: 'Data and filename are required' });
+    }
+
+    // Crear nombre de archivo único con timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeFilename = filename.replace(/[^a-zA-Z0-9\-_]/g, '_');
+    const fullFilename = `${safeFilename}_${timestamp}.json`;
+    
+    // Ruta de la carpeta saved_chats
+    const savedChatsDir = path.join(__dirname, 'saved_chats');
+    const filePath = path.join(savedChatsDir, fullFilename);
+    
+    // Asegurar que el directorio existe
+    if (!fs.existsSync(savedChatsDir)) {
+      fs.mkdirSync(savedChatsDir, { recursive: true });
+    }
+
+    // Guardar el archivo
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    
+    console.log(`💾 Chat saved: ${fullFilename}`);
+    
+    res.json({ 
+      success: true, 
+      filename: fullFilename,
+      message: 'Chat exported and saved successfully' 
+    });
+  } catch (err) {
+    console.error('Export chat error:', err);
+    res.status(500).json({ error: 'Failed to export chat', detail: err.message });
+  }
+});
+
+// Endpoint para listar chats guardados
+app.get('/api/saved-chats', async (req, res) => {
+  try {
+    const savedChatsDir = path.join(__dirname, 'saved_chats');
+    
+    // Verificar si el directorio existe
+    if (!fs.existsSync(savedChatsDir)) {
+      return res.json({ chats: [] });
+    }
+
+    // Leer archivos del directorio
+    const files = fs.readdirSync(savedChatsDir)
+      .filter(file => file.endsWith('.json'))
+      .map(file => {
+        const filePath = path.join(savedChatsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          filename: file,
+          displayName: file.replace(/_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.json$/, ''),
+          created: stats.birthtime,
+          modified: stats.mtime,
+          size: stats.size
+        };
+      })
+      .sort((a, b) => b.modified - a.modified); // Más recientes primero
+
+    res.json({ chats: files });
+  } catch (err) {
+    console.error('List saved chats error:', err);
+    res.status(500).json({ error: 'Failed to list saved chats', detail: err.message });
+  }
+});
+
+// Endpoint para cargar un chat guardado
+app.get('/api/saved-chats/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const savedChatsDir = path.join(__dirname, 'saved_chats');
+    const filePath = path.join(savedChatsDir, filename);
+    
+    // Verificación de seguridad - asegurar que el archivo esté en saved_chats
+    if (!filePath.startsWith(savedChatsDir)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Chat file not found' });
+    }
+
+    const data = fs.readFileSync(filePath, 'utf8');
+    const chatData = JSON.parse(data);
+    
+    res.json({ success: true, data: chatData });
+  } catch (err) {
+    console.error('Load saved chat error:', err);
+    res.status(500).json({ error: 'Failed to load saved chat', detail: err.message });
+  }
+});
 
 // ✅ usa RegExp en vez de '*'
 app.get(/.*/, (req, res) => {

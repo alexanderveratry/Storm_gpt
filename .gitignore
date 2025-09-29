@@ -82,3 +82,5 @@ pip-wheel-metadata/
 node_modules/
 
 videos_exp/
+Test_api/
+videos_exp/

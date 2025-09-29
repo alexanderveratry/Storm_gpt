@@ -1,0 +1,429 @@
+{
+  "version": 1,
+  "exportedAt": "2025-09-25T00:50:54.741Z",
+  "nodes": [
+    {
+      "id": "node_0",
+      "content": "Welcome! Let's start a multi-dimensional conversation.",
+      "parentId": null,
+      "timestamp": "2025-08-11T23:20:08.974Z",
+      "summary": "Inicia una conversación multidimensional.",
+      "keywords": [
+        "conversación",
+        "multidimensional",
+        "bienvenida"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_1",
+      "content": "Hagamos una historia en conjunto te parece ? Juanito  era un niño que vivia en...",
+      "parentId": "node_0",
+      "timestamp": "2025-08-11T23:20:17.161Z",
+      "summary": "Juanito, un niño que vivía en un lugar determinado, inicia una historia en conjunto, invitando a la participación y colaboración en la narración.",
+      "keywords": [
+        "Juanito",
+        "niño",
+        "historia en conjunto",
+        "participación",
+        "narración"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_2",
+      "content": "¡Me parece genial! Continuemos. Juanito era un niño que vivía en un pequeño pueblo rodeado de montañas. Cada día, soñaba con aventurarse más allá de los límites de su hogar. Un día, mientras exploraba el bosque cercano, encontró un mapa antiguo que prometía llevarlo a un tesoro escondido. \n\n¿Qué te gustaría que suceda a continuación? ¿Debería Juanito seguir el mapa solo o buscar ayuda de sus amigos?",
+      "parentId": "node_1",
+      "timestamp": "2025-08-11T23:20:20.444Z",
+      "summary": "Juanito, un niño de un pequeño pueblo, encuentra un mapa antiguo que promete un tesoro escondido y debe decidir si aventurarse solo o buscar la ayuda de sus amigos.",
+      "keywords": [
+        "juanito",
+        "mapa antiguo",
+        "tesoro escondido",
+        "aventura",
+        "amigos"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_3",
+      "content": "Juanito decidió ir en busca de sus amigos",
+      "parentId": "node_2",
+      "timestamp": "2025-08-11T23:21:03.335Z",
+      "summary": "Juanito decide salir en busca de sus amigos.",
+      "keywords": [
+        "Juanito",
+        "buscar",
+        "amigos",
+        "decidió"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_4",
+      "content": "Juanito decidió ir en busca de sus amigos. Corrió hacia el pueblo y reunió a sus dos mejores amigos, Sofía y Luis. Emocionados por la aventura, los tres se sentaron a examinar el mapa. \n\nEl mapa mostraba un camino que atravesaba el bosque, cruzaba un río y subía una montaña. Sofía sugirió que debían llevar provisiones, mientras que Luis estaba más interesado en saber qué tipo de tesoro podrían encontrar. \n\n¿Te gustaría que los amigos se preparen para la aventura, o que encuentren un obstáculo en su camino antes de comenzar?",
+      "parentId": "node_3",
+      "timestamp": "2025-08-11T23:21:07.841Z",
+      "summary": "Juanito y sus amigos Sofía y Luis se preparan para una aventura tras examinar un mapa que muestra un camino a través del bosque, un río y una montaña.",
+      "keywords": [
+        "aventura",
+        "mapa",
+        "bosque",
+        "tesoro",
+        "provisiones"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_5",
+      "content": "Juanito fue solo",
+      "parentId": "node_2",
+      "timestamp": "2025-08-11T23:21:55.584Z",
+      "summary": "Juanito experimentó la soledad en su vida.",
+      "keywords": [
+        "juanito",
+        "soledad",
+        "experiencia",
+        "vida"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_6",
+      "content": "Juanito decidió seguir el mapa solo, lleno de emoción y un poco de nerviosismo. A medida que avanzaba por el bosque, encontró pistas misteriosas: un árbol con marcas extrañas y un pequeño arroyo que parecía guiarlo en la dirección correcta. Sin embargo, pronto se dio cuenta de que el camino era más difícil de lo que había imaginado. \n\nEn un momento de duda, se preguntó si realmente había tomado la decisión correcta. ¿Qué debería hacer ahora? ¿Continuar buscando el tesoro o regresar a casa?",
+      "parentId": "node_5",
+      "timestamp": "2025-08-11T23:21:58.323Z",
+      "summary": "Juanito sigue un mapa en el bosque, encontrando pistas misteriosas, pero se enfrenta a dudas sobre si continuar su búsqueda del tesoro o regresar a casa.",
+      "keywords": [
+        "mapa",
+        "bosque",
+        "pistas misteriosas",
+        "dudas",
+        "tesoro"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_7",
+      "content": "Escucho un pajaro graznando fuerte y decidio ir por el tesoro",
+      "parentId": "node_6",
+      "timestamp": "2025-08-12T00:44:49.127Z",
+      "summary": "El narrador escucha un pájaro graznando y decide buscar un tesoro.",
+      "keywords": [
+        "pájaro",
+        "graznando",
+        "tesoro",
+        "decisión",
+        "natural"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_8",
+      "content": "Al escuchar el graznido fuerte de un pájaro, Juanito sintió que era una señal para seguir adelante. Con renovada determinación, decidió que no regresaría a casa sin haber explorado más a fondo. Siguió el sonido del pájaro, que parecía guiarlo hacia un claro en el bosque.\n\nCuando llegó, se encontró con un hermoso paisaje lleno de flores y un pequeño lago. En el centro del lago había una isla con un árbol grande y frondoso. Juanito sintió que el tesoro podría estar allí. \n\n¿Qué debería hacer ahora? ¿Tratar de cruzar el lago para llegar a la isla o buscar otra forma de acceder a ella?",
+      "parentId": "node_7",
+      "timestamp": "2025-08-12T00:44:52.759Z",
+      "summary": "Juanito sigue el graznido de un pájaro y encuentra un claro con un lago y una isla. Se pregunta si debe cruzar el lago para buscar un tesoro en la isla.",
+      "keywords": [
+        "graznido de pájaro",
+        "exploración",
+        "lago",
+        "isla",
+        "tesoro"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_9",
+      "content": "tratar de cruzar el lago, no lo logra",
+      "parentId": "node_8",
+      "timestamp": "2025-08-12T00:45:20.818Z",
+      "summary": "Un intento fallido de cruzar el lago es descrito en el texto.",
+      "keywords": [
+        "cruzar el lago",
+        "intento fallido",
+        "no lo logra"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_10",
+      "content": "Juanito decidió intentar cruzar el lago. Se aventuró hacia el agua, pero al poco tiempo se dio cuenta de que las corrientes eran más fuertes de lo que parecía. A pesar de sus esfuerzos, no logró llegar a la isla y tuvo que regresar a la orilla, empapado y un poco desanimado.\n\nSin embargo, no se rindió. Mientras se secaba, observó el paisaje alrededor y notó algo interesante: a la derecha del lago había un viejo barco de madera medio hundido. Tal vez podría usarlo para llegar a la isla.\n\n¿Qué debería hacer ahora? ¿Intentar reparar el barco para cruzar el lago o buscar otra forma de acceder a la isla?",
+      "parentId": "node_9",
+      "timestamp": "2025-08-12T00:45:26.350Z",
+      "summary": "Juanito intenta cruzar un lago, pero las corrientes lo llevan de regreso. Al observar un viejo barco hundido, considera repararlo para llegar a la isla.",
+      "keywords": [
+        "cruzar lago",
+        "corrientes fuertes",
+        "viejo barco",
+        "reparar barco",
+        "isla"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_11",
+      "content": "lo reparo a la rapida y trato de cruzar",
+      "parentId": "node_10",
+      "timestamp": "2025-08-12T00:46:14.043Z",
+      "summary": "Reparo algo rápidamente y intento cruzar.",
+      "keywords": [
+        "reparar",
+        "rápido",
+        "cruzar"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_12",
+      "content": "Juanito decidió reparar el viejo barco a la rápida. Usó algunas ramas y hojas que encontró cerca para tapar las fugas y, aunque no era perfecto, se sentía lo suficientemente seguro como para intentarlo. Con el corazón latiendo de emoción, subió al barco y comenzó a remar hacia la isla.\n\nA medida que se adentraba en el lago, las corrientes seguían siendo desafiantes, pero Juanito se concentró y utilizó toda su fuerza. Finalmente, logró llegar a la isla, agotado pero triunfante.\n\nUna vez en la isla, vio el gran árbol frondoso en el centro y sintió que el tesoro podría estar escondido allí. ¿Qué debería hacer ahora? ¿Explorar alrededor del árbol o buscar alguna pista sobre el tesoro en la isla?",
+      "parentId": "node_11",
+      "timestamp": "2025-08-12T00:46:18.061Z",
+      "summary": "Juanito repara un viejo barco y navega hacia una isla en busca de un tesoro escondido, enfrentando corrientes desafiantes y sintiendo emoción por la aventura.",
+      "keywords": [
+        "barco",
+        "isla",
+        "tesoro",
+        "aventura",
+        "corrientes"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_13",
+      "content": "se estaba acercando al arbol pero escucho una peligrosa tribu",
+      "parentId": "node_12",
+      "timestamp": "2025-08-12T00:47:28.409Z",
+      "summary": "Una persona se aproxima a un árbol, pero escucha los peligros de una tribu cercana.",
+      "keywords": [
+        "árbol",
+        "tribu",
+        "peligro",
+        "aproximación",
+        "escruchar"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_14",
+      "content": "Mientras Juanito se acercaba al gran árbol frondoso, de repente escuchó ruidos inquietantes. Al prestar atención, se dio cuenta de que no estaba solo: una tribu desconocida estaba cerca, hablando en un idioma que no entendía. Su corazón se aceleró al pensar en el peligro que podría representar.\n\nJuanito sabía que debía actuar con cautela. Podía intentar esconderse detrás de un arbusto cercano para observar a la tribu o, si se sentía valiente, intentar comunicarse con ellos para descubrir qué estaban haciendo en la isla. \n\n¿Qué debería hacer ahora? ¿Esconderse y observar o acercarse a la tribu?",
+      "parentId": "node_13",
+      "timestamp": "2025-08-12T00:47:31.682Z",
+      "summary": "Juanito escucha ruidos inquietantes cerca de un árbol y descubre una tribu desconocida. Debe decidir si esconderse o acercarse para comunicarse.",
+      "keywords": [
+        "tribu desconocida",
+        "peligro",
+        "comunicación",
+        "decisión",
+        "esconderse"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_15",
+      "content": "trato de comunicarse",
+      "parentId": "node_14",
+      "timestamp": "2025-08-12T00:47:52.884Z",
+      "summary": "El texto menciona un intento de comunicación, sugiriendo la búsqueda de conexión o entendimiento entre las partes implicadas.",
+      "keywords": [
+        "comunicación",
+        "intento",
+        "conexión",
+        "entendimiento"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_16",
+      "content": "Juanito, decidido a no dejar que el miedo lo detuviera, decidió acercarse a la tribu y tratar de comunicarse. Con voz temblorosa pero firme, saludó en un tono amistoso, levantando las manos para mostrar que no tenía intenciones hostiles.\n\nPara su sorpresa, los miembros de la tribu se detuvieron y lo miraron con curiosidad. Uno de ellos, un hombre mayor con un tocado colorido, se acercó y comenzó a hablar en un idioma que Juanito no entendía. Sin embargo, el tono de su voz parecía tranquilo.\n\nJuanito se dio cuenta de que podría intentar gesticular o dibujar en la tierra para hacerles entender que estaba buscando un tesoro. \n\n¿Qué debería hacer ahora? ¿Intentar comunicarse aún más con gestos o intentar dibujar un mapa en la tierra?",
+      "parentId": "node_15",
+      "timestamp": "2025-08-12T00:47:57.383Z",
+      "summary": "Juanito enfrenta su miedo y se acerca a una tribu, tratando de comunicarse amistosamente a pesar de la barrera del idioma, buscando formas de expresar su deseo de encontrar un tesoro.",
+      "keywords": [
+        "comunicación",
+        "tribu",
+        "miedo",
+        "tesoro",
+        "gestos"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_17",
+      "content": "les dibujo un tesoro, al instante se pusieron agresivos",
+      "parentId": "node_16",
+      "timestamp": "2025-08-12T00:48:43.957Z",
+      "summary": "Un dibujo de un tesoro provoca una reacción agresiva en los presentes.",
+      "keywords": [
+        "tesoro",
+        "dibujo",
+        "agresivos",
+        "reacción",
+        "conflicto"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_18",
+      "content": "Juanito, al dibujar un tesoro en la tierra, vio cómo las expresiones de los miembros de la tribu cambiaban rápidamente de curiosidad a agresividad. Los murmullos se intensificaron y algunos comenzaron a acercarse a él con gestos amenazantes. Su corazón latía con fuerza al darse cuenta de que había hecho un gesto que podría haber sido malinterpretado.\n\nSin saber qué hacer, Juanito miró a su alrededor en busca de una salida. Podía intentar disculparse y explicar que solo estaba buscando un tesoro, o podría buscar un lugar para esconderse mientras pensaba en un plan de escape.\n\n¿Qué debería hacer ahora? ¿Tratar de disculparse y explicar su intención o intentar esconderse?",
+      "parentId": "node_17",
+      "timestamp": "2025-08-12T00:48:47.356Z",
+      "summary": "Juanito dibuja un tesoro, lo que provoca reacciones agresivas en la tribu. Asustado, considera disculparse o buscar un lugar para esconderse mientras planea su escape.",
+      "keywords": [
+        "tesoro",
+        "tribu",
+        "agresividad",
+        "disculparse",
+        "esconderse"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_19",
+      "content": "comenzo a escapar directo al barco mientras lo perseguian, ahi paso algo más inesperado",
+      "parentId": "node_18",
+      "timestamp": "2025-08-12T00:49:25.453Z",
+      "summary": "Un personaje empieza a escapar hacia un barco mientras es perseguido, donde ocurre un evento inesperado.",
+      "keywords": [
+        "escapar",
+        "barco",
+        "persecución",
+        "evento inesperado"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_20",
+      "content": "Mientras Juanito corría hacia el barco, los miembros de la tribu lo perseguían, gritando y gesticulando. Su corazón latía con fuerza y la adrenalina corría por sus venas. Justo cuando estaba a punto de llegar al barco, tropezó con una raíz sobresaliente y cayó al suelo.\n\nAl levantarse rápidamente, se dio cuenta de que había una luz brillante que emanaba de un objeto en el agua cerca del barco. Atraído por la luz, Juanito se acercó y vio que era un antiguo artefacto, un medallón con inscripciones extrañas. Sin pensarlo, lo tomó en sus manos.\n\nEn ese momento, la luz del medallón pareció atraer la atención de la tribu, que se detuvo en seco. Miraban el artefacto con asombro, y sus expresiones de agresividad comenzaron a transformarse en sorpresa.\n\n¿Qué debería hacer ahora? ¿Mostrarles el medallón para tratar de comunicarse o aprovechar la confusión para escapar en el barco?",
+      "parentId": "node_19",
+      "timestamp": "2025-08-12T00:49:29.804Z",
+      "summary": "Juanito, perseguido por su tribu, descubre un medallón brillante en el agua que cambia la actitud de sus perseguidores, enfrentándose a la decisión de mostrarlo o escapar.",
+      "keywords": [
+        "medallón antiguo",
+        "tribu",
+        "confusión",
+        "decisión",
+        "escapar"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_21",
+      "content": "se puso el medallon, con el cual logro entender el idioma de ellos y comunicarse",
+      "parentId": "node_20",
+      "timestamp": "2025-08-12T00:50:21.051Z",
+      "summary": "El personaje se pone un medallón que le permite entender y comunicarse en otro idioma.",
+      "keywords": [
+        "medallón",
+        "comunicación",
+        "entender",
+        "idioma",
+        "personaje"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_22",
+      "content": "Juanito, al ponerse el medallón, sintió una energía inusual recorrer su cuerpo. De repente, las palabras del hombre mayor de la tribu comenzaron a cobrar sentido. Podía entender lo que decían, y con gran asombro, se dio cuenta de que ahora podía comunicarse con ellos.\n\nCon un poco de nerviosismo, levantó la mano y dijo: \"¡Hola! No quería asustarlos, solo estaba buscando un tesoro.\" Los miembros de la tribu se miraron entre sí, y el hombre mayor, con una sonrisa, respondió en un tono amigable.\n\nPoco a poco, Juanito logró explicar su intención. La tribu, que había estado protegiendo su territorio y sus secretos, se dio cuenta de que él no era una amenaza. En cambio, estaban interesados en conocerlo mejor y en compartir sus historias.\n\n¿Qué debería hacer ahora? ¿Aceptar la invitación de la tribu para conocer más sobre su cultura o preguntarles acerca del tesoro que había estado buscando?",
+      "parentId": "node_21",
+      "timestamp": "2025-08-12T00:50:27.914Z",
+      "summary": "Juanito, tras ponerse un medallón, obtiene la habilidad de comunicarse con una tribu, que inicialmente protege su territorio, pero decide conocerlo mejor tras entender sus intenciones.",
+      "keywords": [
+        "medallón",
+        "tribu",
+        "comunicación",
+        "cultura",
+        "tesoro"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_23",
+      "content": "uso el medallon para volar y lanzar rayos, y comenzo una pelea con los de la tribu",
+      "parentId": "node_20",
+      "timestamp": "2025-08-12T00:51:25.872Z",
+      "summary": "El protagonista utiliza un medallón para volar y lanzar rayos, desencadenando una pelea con miembros de una tribu.",
+      "keywords": [
+        "medallón",
+        "volar",
+        "rayos",
+        "pelea",
+        "tribu"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_24",
+      "content": "Juanito, al darse cuenta del poder del medallón, sintió una oleada de confianza. Con un gesto rápido, levantó el artefacto y, para su asombro, comenzó a levitar en el aire. La luz del medallón brillaba intensamente, y de repente, un rayo de energía salió disparado hacia el cielo, iluminando el entorno.\n\nLos miembros de la tribu, al ver este espectáculo, se quedaron boquiabiertos, pero algunos de ellos, sintiéndose amenazados, comenzaron a prepararse para atacar. Juanito, ahora volando por encima de ellos, se dio cuenta de que tenía la ventaja, pero también sabía que no quería hacerles daño.\n\nEn medio del caos, Juanito tuvo que tomar una decisión: ¿debería usar el poder del medallón para defenderse y asustar a la tribu, o intentar calmar la situación y buscar una forma de comunicarse con ellos?",
+      "parentId": "node_23",
+      "timestamp": "2025-08-12T00:51:30.882Z",
+      "summary": "Juanito descubre el poder de un medallón que le permite levitar, generando asombro y temor en la tribu, llevándolo a decidir entre usar su poder para defenderse o calmar la situación.",
+      "keywords": [
+        "Juanito",
+        "medallón",
+        "levitar",
+        "tribu",
+        "decisión"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_25",
+      "content": "decidio atacarlos sin piedad, vengativamente",
+      "parentId": "node_24",
+      "timestamp": "2025-08-12T00:52:02.020Z",
+      "summary": "El sujeto tomó la decisión de atacar a sus oponentes de manera implacable y por motivos de venganza.",
+      "keywords": [
+        "ataque",
+        "venganza",
+        "implacable",
+        "decisión",
+        "oponentes"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_26",
+      "content": "Decidido a demostrar su poder y sin piedad, Juanito lanzó rayos de energía hacia los miembros de la tribu. La luz brillante y los estruendos resonaron en el aire mientras los rayos impactaban en el suelo a su alrededor, creando una atmósfera de caos y miedo. La tribu, ahora asustada y confundida, comenzó a retroceder, pero algunos valientes intentaron avanzar.\n\nJuanito, en su furia, no se dio cuenta de que estaba alejándose de su verdadera intención de encontrar un tesoro o comunicarse. La situación se tornó peligrosa, y aunque tenía el poder del medallón, se dio cuenta de que estaba a punto de convertirse en lo que siempre había temido: un agresor.\n\nEn ese momento de reflexión, Juanito se preguntó: ¿debería continuar su ataque o detenerse y buscar una manera de resolver la situación antes de que se volviera irreversible?",
+      "parentId": "node_25",
+      "timestamp": "2025-08-12T00:52:06.317Z",
+      "summary": "Juanito lanza rayos de energía a una tribu, pero reflexiona sobre su agresión mientras considera su verdadero objetivo de encontrar un tesoro y comunicarse, temiendo convertirse en un agresor.",
+      "keywords": [
+        "poder",
+        "agresión",
+        "reflexión",
+        "tribu",
+        "tesoro"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_27",
+      "content": "quiero que los amigos se peleen sobre quien es el más alto, ya que el más alto es lider. Luego finalmente decidan que el lider es que corre más lento y no se movieron más.",
+      "parentId": "node_4",
+      "timestamp": "2025-09-25T00:50:11.175Z",
+      "summary": "Amigos discuten liderazgo por altura, el líder resulta ser el más lento y ya no se mueven.",
+      "keywords": [
+        "Amigos discuten liderazgo por altura",
+        "el líder resulta ser el más lento y ya no se mueven."
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_28",
+      "content": "Se pelearon por quién era más alto, diciendo que el líder debía ser el más alto. Cada uno decía: “Yo soy el líder”. Después de un rato, se dieron cuenta de lo tonto que era. Entonces decidieron probar una regla rara: el líder sería quien corre más lento y no se movía más. Eligieron a Luis; se quedó quieto en un punto señalando el camino, mientras Sofía y Juanito avanzaban despacio siguiendo el mapa. Así, continuaron la aventura, a su propio ritmo y atentos al tesoro.",
+      "parentId": "node_27",
+      "timestamp": "2025-09-25T00:50:30.902Z",
+      "summary": "prueban regla: líder es quien corre más lento y no se mueve, eligen a Luis, él se queda señalando, Sofía y Juanito avanzan siguiendo el mapa, siguen la aventura a su propio ritmo, atentos al tesoro.",
+      "keywords": [
+        "prueban regla: líder es quien corre más lento y no se mueve",
+        "eligen a Luis",
+        "él se queda señalando",
+        "Sofía y Juanito avanzan siguiendo el mapa",
+        "siguen la aventura a su propio ritmo",
+        "atentos al tesoro."
+      ],
+      "sticker": ""
+    }
+  ]
+}

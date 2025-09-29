@@ -21,6 +21,9 @@ import { hash32, normalize, cosine, byTimeAsc } from './utils.js';
  * @property {string|null} summary
  * @property {string[]} keywords
  * @property {boolean=} summaryGenerating
+ * @property {string|null} image - URL de la imagen generada
+ * @property {string|null} imagePrompt - Prompt usado para generar la imagen
+ * @property {boolean=} imageGenerating - Estado de generación de imagen
  * @property {number=} fx
  * @property {number=} fy
  * @property {number=} layoutX
@@ -265,6 +268,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
   getEffectiveViewState(nodeId) {
     if (this.globalViewMode === 'content') return true;
     if (this.globalViewMode === 'summary') return false;
+    if (this.globalViewMode === 'stickers') return 'stickers';
     // If individual mode, use individual node state
     return this.getNodeViewState(nodeId);
   }
@@ -294,6 +298,10 @@ export class EnhancedConversationalTree extends ConversationalTree {
       role,
       summary: null,
       keywords: [],
+      // Nuevo: soporte para imágenes
+      image: null, // URL de la imagen generada
+      imagePrompt: null, // Prompt usado para generar la imagen
+      imageGenerating: false, // Estado de generación
     };
 
     this.nodes.set(id, node);
@@ -473,7 +481,59 @@ export class EnhancedConversationalTree extends ConversationalTree {
       if (n3) delete n3.summaryGenerating; 
       // Note: updateVisualization and updateSidebar will be called from main app
       console.log('🏁 Summary generation completed for node:', nodeId);
-    } 
+    }
+  }
+
+  // Nuevo método: Generar imagen para un nodo
+  async generateImageForNode(nodeId, customPrompt = null) {
+    const node = this.nodes.get(nodeId);
+    if (!node) {
+      console.error('❌ Node not found:', nodeId);
+      return false;
+    }
+
+    if (node.imageGenerating) {
+      console.log('⏸️ Image already generating for node:', nodeId);
+      return false;
+    }
+
+    try {
+      node.imageGenerating = true;
+      console.log('🎨 Starting image generation for node:', nodeId);
+
+      // Usar prompt personalizado o generar uno basado en el contenido/resumen del nodo
+      const prompt = customPrompt || node.summary || node.content;
+      if (!prompt) {
+        throw new Error('No content available for image generation');
+      }
+
+      node.imagePrompt = prompt;
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: prompt, nodeId: nodeId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate image');
+      }
+
+      const data = await response.json();
+      if (data.output_url) {
+        node.image = data.output_url;
+        console.log('✅ Image generated successfully for node:', nodeId);
+        return true;
+      } else {
+        throw new Error('No image URL received from API');
+      }
+    } catch (error) {
+      console.error('❌ Image generation failed for node:', nodeId, error);
+      return false;
+    } finally {
+      node.imageGenerating = false;
+    }
   }
 
   async ensureSummaries(batchSize = 2) {
@@ -644,6 +704,10 @@ export class EnhancedConversationalTree extends ConversationalTree {
         role,
         summary: n.summary ?? null,
         keywords: n.keywords ?? [],
+        // Nuevo: soporte para imágenes
+        image: n.sticker ?? null, // Mapear 'sticker' del JSON a 'image' interno
+        imagePrompt: null, // Se establecerá si se regenera
+        imageGenerating: false,
       };
 
       this.nodes.set(id, node);

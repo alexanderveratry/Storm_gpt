@@ -1,5 +1,11 @@
 # Storm_gpt
 
+## Tematica
+Interaccion con modelos de Lenguaje.
+
+## Problema
+-LINEALIDAD vs Ramificacion. Problemas tanto para el Usuario como para el modelo provocado por la incapacidad de ramificar conversaciones. (orden, claridad, manejo de variantes y contexto)
+-Conversaciones largas e dificiles de entender con LLM --> se pueden resumir --> y ver de diversas formas (imagenes, nemotecnia)
 ## Objetivo
 Facilitar la interacción con modelos de LLM a través de la fragmentación en ramas de las conversaciones, incluyendo visualización interactiva con resúmenes, palabras clave, emojis, imágenes, stickers, gifs u otros elementos multimedia.
 

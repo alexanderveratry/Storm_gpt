@@ -72,7 +72,7 @@ export class OpenAIIntegration {
     for (const { node, proximity, reason } of ctxList) {
       p += `- [${proximity.toUpperCase()}-${reason}]: "${node.content}"\n`;
     }
-    p += 'Instructions: consider context, reference branches, be concise, optionally suggest new branch directions.';
+    p += 'Instructions: Answer simple';
     return p;
   }
 

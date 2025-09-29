@@ -52,3 +52,10 @@ export const VIEW_MODES = {
   TREE: 'tree',
   CHAT: 'chat'
 };
+
+// Modos de visualización de contenido en nodos
+export const CONTENT_VIEW_MODES = {
+  SUMMARY: 'summary',
+  CONTENT: 'content', 
+  STICKERS: 'stickers'
+};
