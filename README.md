@@ -11,6 +11,9 @@ Facilitar la interacción con modelos de LLM a través de la fragmentación en r
 
 Permitiendo al Usuario manejar el contexto, profundizar en diversas tematicas y manejar el o los modelos a utilizar. 
 
+## Video Demo
+eng: https://www.youtube.com/watch?v=iJEUfIpUQ2I
+esp: https://youtu.be/-pCUTYEdkh4
 
 ## Requisitos necesarios
 
