@@ -103,21 +103,115 @@ export class TreeRenderer {
       .attr('title', (d) => d.content || '')
       .attr('transform', (d) => `translate(${this._posX(d)},${this._posY(d)})`);
 
+    // Nodos de IA (círculos rojos)
     nodeG
-      .filter((d) => d.role === 'assistant')
+      .filter((d) => d.tipo === 'IA')
       .append('circle')
-      .attr('class', (d) => `node ${d.id === tree.currentNodeId ? 'active' : ''}`)
+      .attr('class', (d) => `node ia ${d.id === tree.currentNodeId ? 'active' : ''}`)
       .attr('r', (d) => 8 + (d.importance ?? 0) * 4);
 
+    // Nodos de notas (cuadrados amarillos)
     nodeG
-      .filter((d) => d.role !== 'assistant')
+      .filter((d) => d.tipo === 'Notas')
       .append('rect')
-      .attr('class', (d) => `node user ${d.id === tree.currentNodeId ? 'active' : ''}`)
+      .attr('class', (d) => `node note ${d.id === tree.currentNodeId ? 'active' : ''}`)
+      .attr('width', (d) => 16 + (d.importance ?? 0) * 8)
+      .attr('height', (d) => 16 + (d.importance ?? 0) * 8)
+      .attr('x', (d) => -(8 + (d.importance ?? 0) * 4))
+      .attr('y', (d) => -(8 + (d.importance ?? 0) * 4));
+
+    // Nodos de usuario/prompt (rombos rojos)
+    nodeG
+      .filter((d) => d.tipo === 'Prompt')
+      .append('rect')
+      .attr('class', (d) => `node prompt ${d.id === tree.currentNodeId ? 'active' : ''}`)
       .attr('width', (d) => 16 + (d.importance ?? 0) * 8)
       .attr('height', (d) => 16 + (d.importance ?? 0) * 8)
       .attr('x', (d) => -(8 + (d.importance ?? 0) * 4))
       .attr('y', (d) => -(8 + (d.importance ?? 0) * 4))
       .attr('transform', 'rotate(45)');
+
+    // Nodos de ramificación (círculos verdes)
+    nodeG
+      .filter((d) => d.tipo === 'Ramificacion')
+      .append('circle')
+      .attr('class', (d) => `node ramificacion ${d.id === tree.currentNodeId ? 'active' : ''}`)
+      .attr('r', (d) => 8 + (d.importance ?? 0) * 4);
+
+    // Botones de eliminación para cada nodo
+    const deleteButtons = nodeG
+      .append('g')
+      .attr('class', 'delete-button-group')
+      .style('opacity', 0)
+      .style('pointer-events', 'none');
+
+    deleteButtons
+      .append('circle')
+      .attr('class', 'delete-button-bg')
+      .attr('r', 8)
+      .attr('cx', 15)
+      .attr('cy', -15);
+
+    deleteButtons
+      .append('text')
+      .attr('class', 'delete-button-x')
+      .attr('x', 15)
+      .attr('y', -11)
+      .attr('text-anchor', 'middle')
+      .text('✕')
+      .style('font-size', '10px')
+      .style('font-weight', 'bold');
+
+    // Mostrar/ocultar botones de eliminación en hover
+    nodeG
+      .on('mouseenter', function(event, d) {
+        // Solo mostrar si no es el único nodo o si hay otros nodos raíz
+        const rootNodes = [];
+        tree.nodes.forEach((node, id) => {
+          if (node.parentId === null) rootNodes.push(id);
+        });
+        
+        const canDelete = tree.nodes.size > 1 && !(rootNodes.length === 1 && rootNodes[0] === d.id);
+        
+        if (canDelete) {
+          const deleteGroup = d3.select(this).select('.delete-button-group');
+          // Cancelar cualquier timeout pendiente
+          if (deleteGroup.node().__hideTimeout) {
+            clearTimeout(deleteGroup.node().__hideTimeout);
+            delete deleteGroup.node().__hideTimeout;
+          }
+          
+          deleteGroup
+            .style('opacity', 1)
+            .style('pointer-events', 'auto');
+        }
+      })
+      .on('mouseleave', function(event, d) {
+        const deleteGroup = d3.select(this).select('.delete-button-group');
+        
+        // Establecer un timeout de 1 segundo antes de ocultar
+        deleteGroup.node().__hideTimeout = setTimeout(() => {
+          deleteGroup
+            .style('opacity', 0)
+            .style('pointer-events', 'none');
+          delete deleteGroup.node().__hideTimeout;
+        }, 1000);
+      });
+
+    // Event handler para botones de eliminación
+    deleteButtons
+      .on('click', function(event, d) {
+        event.stopPropagation(); // Evitar que se propague al nodo
+        
+        // Confirmar eliminación
+        const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar el nodo "${d.content.substring(0, 50)}${d.content.length > 50 ? '...' : ''}" y todos sus descendientes?`);
+        
+        if (confirmDelete) {
+          console.log(`🗑️ Deleting node: ${d.id}`);
+          tree.deleteNode(d.id);
+          updateAll();
+        }
+      });
 
     // labels
     const labels = this.g
@@ -181,7 +275,18 @@ export class TreeRenderer {
       if (n.role === 'assistant') {
         const r = 8 + (n.importance ?? 0) * 4;
         return { left: this._posX(n) - r, right: this._posX(n) + r, top: this._posY(n) - r, bottom: this._posY(n) + r };
+      } else if (n.role === 'note' || n.isNote) {
+        // Notas: cuadrados sin rotación
+        const size = 16 + (n.importance ?? 0) * 8;
+        const half = size / 2;
+        return {
+          left: this._posX(n) - half,
+          right: this._posX(n) + half,
+          top: this._posY(n) - half,
+          bottom: this._posY(n) + half,
+        };
       } else {
+        // Usuario: rombos (cuadrados rotados)
         const size = 16 + (n.importance ?? 0) * 8;
         const dist = size / Math.SQRT2;
         return {

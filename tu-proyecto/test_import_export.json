@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "exportedAt": "2025-10-13T10:00:00.000Z",
+  "nodes": [
+    {
+      "id": "node_0",
+      "content": "Hola, ¿cómo estás?",
+      "parentId": null,
+      "timestamp": "2025-10-13T10:00:00.000Z",
+      "summary": "Saludo inicial",
+      "keywords": ["saludo"],
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Prompt"
+    },
+    {
+      "id": "node_1", 
+      "content": "¡Hola! Estoy muy bien, gracias por preguntar. ¿En qué puedo ayudarte hoy?",
+      "parentId": "node_0",
+      "timestamp": "2025-10-13T10:01:00.000Z",
+      "summary": "Respuesta cordial de la IA",
+      "keywords": ["saludo", "ayuda"],
+      "role": "assistant",
+      "isAI": true,
+      "isNote": false,
+      "tipo": "IA"
+    },
+    {
+      "id": "node_2",
+      "content": "Esto es una nota para recordar que el usuario preguntó sobre el estado",
+      "parentId": "node_0",
+      "timestamp": "2025-10-13T10:02:00.000Z",
+      "summary": "Nota del usuario",
+      "keywords": ["nota", "recordatorio"],
+      "role": "note",  
+      "isAI": false,
+      "isNote": true,
+      "tipo": "Notas"
+    },
+    {
+      "id": "node_3",
+      "content": "Esta es una rama generada automáticamente sobre la temática de saludo",
+      "parentId": "node_0",
+      "timestamp": "2025-10-13T10:03:00.000Z",
+      "summary": "Rama automática sobre saludos",
+      "keywords": ["ramificación", "saludo"],
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Ramificacion"
+    }
+  ]
+}

@@ -281,6 +281,9 @@ export class UIManager {
     // Update sticker buttons
     this.updateStickerButtons(nodeData.id);
     
+    // Update AI invoke button for notes
+    this.updateAiInvokeButton(nodeData.id);
+    
     // Store the originating element for focus return
     panel.dataset.originatingNodeId = nodeData.id;
     
@@ -459,7 +462,12 @@ export class UIManager {
     console.log('Adding chat message:', content.substring(0, 50));
 
     try {
-      setStatus('Añadiendo mensaje al chat…');
+      // Verificar si el modelo seleccionado es "NOTAS"
+      const modelSelector = document.querySelector('#modelSelector');
+      const selectedModel = modelSelector ? modelSelector.value : 'gpt-5-nano';
+      const isNotesMode = selectedModel === 'NOTAS';
+
+      setStatus(isNotesMode ? 'Añadiendo nota al chat…' : 'Añadiendo mensaje al chat…');
       
       // Encontrar el último nodo de la rama actual para usarlo como padre
       const fullBranch = this.getFullBranchFromNode(this.tree.currentNodeId);
@@ -469,7 +477,7 @@ export class UIManager {
       console.log(`Adding message with parent: ${parentId}`);
       
       // Agregar el nodo del usuario
-      const userNodeId = await this.tree.addNode(content, parentId, false, false);
+      const userNodeId = await this.tree.addNode(content, parentId, false, false, isNotesMode);
       
       // Actualizar el nodo actual al nuevo mensaje de usuario
       this.tree.currentNodeId = userNodeId;
@@ -480,14 +488,10 @@ export class UIManager {
       // Limpiar input
       input.value = '';
       
-      setStatus('Generando respuesta IA…');
-      
-      // Generar respuesta de IA
-      this.tree.generateAIResponse().then((reply) => {
-        setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA');
-        console.log('Chat message flow completed successfully');
-        // Re-renderizar después de la respuesta IA
-        this.renderChatView();
+      if (isNotesMode) {
+        // Modo notas: no generar respuesta de IA
+        setStatus('Nota añadida al chat');
+        console.log('Chat note added successfully - no AI response needed');
         // Scroll al final de la conversación
         setTimeout(() => {
           const chatMessages = document.querySelector('#chatMessages');
@@ -495,12 +499,31 @@ export class UIManager {
             chatMessages.scrollTop = chatMessages.scrollHeight;
           }
         }, 100);
-        setTimeout(clearStatus, 4000);
-      }).catch((err) => {
-        console.error('AI response error in chat', err);
-        setStatus('Error IA: ' + (err.message ?? 'desconocido'));
-        setTimeout(clearStatus, 4000);
-      });
+        setTimeout(clearStatus, 2000);
+      } else {
+        // Modo normal: generar respuesta de IA
+        setStatus('Generando respuesta IA…');
+        
+        // Generar respuesta de IA
+        this.tree.generateAIResponse().then((reply) => {
+          setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA');
+          console.log('Chat message flow completed successfully');
+          // Re-renderizar después de la respuesta IA
+          this.renderChatView();
+          // Scroll al final de la conversación
+          setTimeout(() => {
+            const chatMessages = document.querySelector('#chatMessages');
+            if (chatMessages) {
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+          }, 100);
+          setTimeout(clearStatus, 4000);
+        }).catch((err) => {
+          console.error('AI response error in chat', err);
+          setStatus('Error IA: ' + (err.message ?? 'desconocido'));
+          setTimeout(clearStatus, 4000);
+        });
+      }
 
       // Reenfocar input
       input.focus();
@@ -540,7 +563,39 @@ export class UIManager {
   createChatMessage(node, index, fullBranch) {
     const messageDiv = document.createElement('div');
     const isCurrentNode = node.id === this.tree.currentNodeId;
-    messageDiv.className = `chat-message ${node.role || (node.isAI ? 'assistant' : 'user')} ${isCurrentNode ? 'current-node' : ''}`;
+    
+    // Determinar la clase CSS basada en el tipo del nodo
+    let roleClass;
+    let roleText;
+    
+    switch (node.tipo || (node.isNote ? 'Notas' : (node.isAI ? 'IA' : 'Prompt'))) {
+      case 'Prompt':
+        roleClass = 'user';
+        roleText = 'Tú';
+        break;
+      case 'IA':
+        roleClass = 'assistant';
+        roleText = 'Asistente';
+        break;
+      case 'Notas':
+        roleClass = 'note';
+        roleText = 'Nota';
+        break;
+      case 'Ramificacion':
+        roleClass = 'ramificacion';
+        roleText = 'Ramificación';
+        break;
+      default:
+        // Fallback a la lógica anterior
+        roleClass = node.role || (node.isAI ? 'assistant' : 'user');
+        roleText = node.role === 'assistant' ? 'Asistente' : 'Tú';
+        if (node.isNote || node.role === 'note') {
+          roleClass = 'note';
+          roleText = 'Nota';
+        }
+    }
+    
+    messageDiv.className = `chat-message ${roleClass} ${isCurrentNode ? 'current-node' : ''}`;
     messageDiv.dataset.nodeId = node.id;
     
     // Buscar hermanos (nodos con el mismo padre)
@@ -551,7 +606,7 @@ export class UIManager {
     
     messageDiv.innerHTML = `
       <div class="message-header">
-        <span class="message-role">${node.role === 'user' ? 'Tú' : 'Asistente'}</span>
+        <span class="message-role">${roleText}</span>
         <span class="node-id ${isCurrentNode ? 'current' : ''}">${node.id}</span>
         <span class="message-timestamp">${timestamp}</span>
       </div>
@@ -708,6 +763,11 @@ export class UIManager {
         summary: n.summary ?? null,
         keywords: n.keywords ?? [],
         sticker: n.image ?? "", // Incluir la URL del sticker
+        imagePrompt: n.imagePrompt ?? null, // Incluir prompt de imagen
+        role: n.role ?? 'user', // Incluir rol
+        isAI: n.isAI ?? false, // Incluir bandera isAI
+        isNote: n.isNote ?? false, // Incluir bandera isNote
+        tipo: n.tipo ?? (n.isNote ? 'Notas' : (n.isAI ? 'IA' : 'Prompt')), // Incluir tipo
       })),
     };
 
@@ -832,7 +892,11 @@ export class UIManager {
       parentId: null,
       timestamp: currentTime,
       summary: "",
-      keywords: []
+      keywords: [],
+      role: 'assistant', // Nodo de bienvenida como asistente
+      isAI: true,
+      isNote: false,
+      tipo: 'IA' // Tipo IA para el nodo de bienvenida
     };
     nodes.push(welcomeNode);
 
@@ -846,13 +910,51 @@ export class UIManager {
       const nodeId = `node_${index + 1}`;
       const parentId = index === 0 ? "node_0" : `node_${index}`;
 
+      // Determinar el tipo basándose en el rol del mensaje
+      let role, isAI, isNote, tipo;
+      
+      switch (message.role.toLowerCase()) {
+        case 'prompt':
+        case 'user':
+          role = 'user';
+          isAI = false;
+          isNote = false;
+          tipo = 'Prompt';
+          break;
+        case 'response':
+        case 'assistant':
+        case 'ai':
+          role = 'assistant';
+          isAI = true;
+          isNote = false;
+          tipo = 'IA';
+          break;
+        case 'note':
+        case 'notas':
+          role = 'note';
+          isAI = false;
+          isNote = true;
+          tipo = 'Notas';
+          break;
+        default:
+          // Default: alternar entre user y assistant basándose en el índice
+          role = index % 2 === 0 ? 'user' : 'assistant';
+          isAI = role === 'assistant';
+          isNote = false;
+          tipo = isAI ? 'IA' : 'Prompt';
+      }
+
       const transformedNode = {
         id: nodeId,
         content: message.say,
         parentId: parentId,
         timestamp: currentTime,
         summary: "", // Vacío como especificado
-        keywords: [] // Vacío como especificado
+        keywords: [], // Vacío como especificado
+        role: role, // Incluir rol
+        isAI: isAI, // Incluir bandera isAI
+        isNote: isNote, // Incluir bandera isNote
+        tipo: tipo // Incluir tipo
       };
 
       nodes.push(transformedNode);
@@ -973,11 +1075,22 @@ export class UIManager {
 
     console.log('Adding user message:', content.substring(0, 50));
 
-    // Lógica simplificada para el parentId
+    // Verificar si el modelo seleccionado es "NOTAS"
+    const modelSelector = document.querySelector('#modelSelector');
+    const selectedModel = modelSelector ? modelSelector.value : 'gpt-5-nano';
+    const isNotesMode = selectedModel === 'NOTAS';
+
+    // Lógica de parentId diferente para notas vs mensajes normales
     let parentId = this.tree.currentNodeId;
     const current = this.tree.nodes.get(this.tree.currentNodeId);
 
-    if (current) {
+    if (isNotesMode) {
+      // NOTAS: Inserción flexible - las notas se pueden insertar después de cualquier nodo
+      // Simplemente usar el nodo actual como padre
+      parentId = this.tree.currentNodeId;
+      console.log(`📝 Note will be inserted after current node: ${parentId}`);
+    } else if (current) {
+      // MENSAJES NORMALES: Lógica estricta usuario-IA-usuario
       const role = current.role ?? (current.isAI ? 'assistant' : 'user');
       console.log(`Current node role: ${role}, ID: ${current.id}`);
       
@@ -1004,29 +1117,99 @@ export class UIManager {
     }
 
     try {
-      setStatus('Enviando mensaje…');
-      await this.tree.addNode(content, parentId, false, false); // isAI = false para mensaje de usuario
+      setStatus(isNotesMode ? 'Creando nota…' : 'Enviando mensaje…');
+      await this.tree.addNode(content, parentId, false, false, isNotesMode); // isAI = false, isNote = isNotesMode
       input.value = '';
       this.updateAll();
 
-      setStatus('Esperando respuesta IA…');
-      // Generar respuesta de IA en background sin bloquear la interfaz
-      this.tree.generateAIResponse().then((reply) => {
-        setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA (vacía).');
-        console.log('Message flow completed successfully');
-        this.updateAll(); // Actualizar interfaz cuando se reciba la respuesta
-        setTimeout(clearStatus, 4000);
-      }).catch((err) => {
-        console.error('AI response error', err);
-        setStatus('Error IA: ' + (err.message ?? 'desconocido'));
-        setTimeout(clearStatus, 4000);
-      });
+      if (isNotesMode) {
+        // Modo notas: no generar respuesta de IA
+        setStatus('Nota creada');
+        console.log('Note created successfully - no AI response needed');
+        setTimeout(clearStatus, 2000);
+      } else {
+        // Modo normal: generar respuesta de IA
+        setStatus('Esperando respuesta IA…');
+        // Generar respuesta de IA en background sin bloquear la interfaz
+        this.tree.generateAIResponse().then((reply) => {
+          setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA (vacía).');
+          console.log('Message flow completed successfully');
+          this.updateAll(); // Actualizar interfaz cuando se reciba la respuesta
+          setTimeout(clearStatus, 4000);
+        }).catch((err) => {
+          console.error('AI response error', err);
+          setStatus('Error IA: ' + (err.message ?? 'desconocido'));
+          setTimeout(clearStatus, 4000);
+        });
+      }
 
       // Limpiar input y reenfocar inmediatamente sin esperar la respuesta
       input.focus();
       console.log('User message processed, UI remains interactive');
     } catch (err) {
       console.error('Error adding user message:', err);
+      setStatus('Error: ' + (err.message ?? 'desconocido'));
+      setTimeout(clearStatus, 4000);
+    }
+  }
+
+  async addRootMessage() {
+    const input = document.querySelector(SELECTORS.messageInput);
+    const chatInput = document.querySelector(SELECTORS.chatMessageInput);
+    
+    // Usar el input que esté disponible/activo
+    const activeInput = input && input.offsetParent !== null ? input : chatInput;
+    
+    if (!activeInput) {
+      console.error('No input found for root message');
+      return;
+    }
+
+    const content = activeInput.value.trim();
+    if (!content) {
+      console.log('Empty message, skipping root creation');
+      return;
+    }
+
+    console.log('Creating new root node:', content.substring(0, 50));
+
+    try {
+      // Verificar si el modelo seleccionado es "NOTAS"
+      const modelSelector = document.querySelector('#modelSelector');
+      const selectedModel = modelSelector ? modelSelector.value : 'gpt-5-nano';
+      const isNotesMode = selectedModel === 'NOTAS';
+
+      setStatus(isNotesMode ? 'Creando nota raíz…' : 'Creando nodo raíz…');
+      await this.tree.addRootNode(content, false, isNotesMode); // isAI = false, isNote = isNotesMode
+      activeInput.value = '';
+      this.updateAll();
+
+      if (isNotesMode) {
+        // Modo notas: no generar respuesta de IA
+        setStatus('Nota raíz creada');
+        console.log('Root note created successfully - no AI response needed');
+        setTimeout(clearStatus, 2000);
+      } else {
+        // Modo normal: generar respuesta de IA
+        setStatus('Esperando respuesta IA…');
+        // Generar respuesta de IA en background sin bloquear la interfaz
+        this.tree.generateAIResponse().then((reply) => {
+          setStatus(reply ? 'Respuesta recibida' : 'Sin respuesta IA (vacía).');
+          console.log('Root message flow completed successfully');
+          this.updateAll(); // Actualizar interfaz cuando se reciba la respuesta
+          setTimeout(clearStatus, 4000);
+        }).catch((err) => {
+          console.error('AI response error', err);
+          setStatus('Error IA: ' + (err.message ?? 'desconocido'));
+          setTimeout(clearStatus, 4000);
+        });
+      }
+
+      // Limpiar input y reenfocar inmediatamente sin esperar la respuesta
+      activeInput.focus();
+      console.log('Root message processed, UI remains interactive');
+    } catch (err) {
+      console.error('Error adding root message:', err);
       setStatus('Error: ' + (err.message ?? 'desconocido'));
       setTimeout(clearStatus, 4000);
     }
@@ -1042,6 +1225,8 @@ export class UIManager {
     const controls = document.querySelector(SELECTORS.controls);
     const closeInfoBtn = document.querySelector('#closeInfoPanel');
     const sidebarToggle = document.querySelector('#sidebarToggle');
+    const rootBtn = document.querySelector('#rootBtn');
+    const chatRootBtn = document.querySelector('#chatRootBtn');
 
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1050,6 +1235,17 @@ export class UIManager {
 
     input?.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') e.target.blur();
+    });
+
+    // Root button handlers
+    rootBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await this.addRootMessage();
+    });
+
+    chatRootBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await this.addRootMessage();
     });
 
     // Chat form event handling
@@ -1077,6 +1273,14 @@ export class UIManager {
     
     generateStickerBtn?.addEventListener('click', () => this.generateSticker());
     viewStickerBtn?.addEventListener('click', () => this.viewSticker());
+
+    // Tree generation button
+    const generateTreeBtn = document.querySelector('#generateTreeBtn');
+    generateTreeBtn?.addEventListener('click', () => this.generateTreeFromNode());
+
+    // AI invoke button for notes
+    const invokeAiFromNoteBtn = document.querySelector('#invokeAiFromNoteBtn');
+    invokeAiFromNoteBtn?.addEventListener('click', () => this.invokeAiFromNote());
 
     // Keyboard support for closing info panel with Escape and sidebar toggle
     document.addEventListener('keydown', (e) => {
@@ -1174,6 +1378,35 @@ export class UIManager {
     }
   }
 
+  updateAiInvokeButton(nodeId) {
+    const invokeBtn = document.querySelector('#invokeAiFromNoteBtn');
+    if (!invokeBtn) return;
+
+    const node = this.tree.nodes.get(nodeId);
+    if (!node) return;
+
+    // Mostrar el botón solo si es una nota
+    if (node.isNote || node.role === 'note') {
+      invokeBtn.style.display = 'inline-block';
+      
+      // Verificar si ya tiene un hijo IA
+      const hasAiChild = (node.children ?? []).some((childId) => {
+        const child = this.tree.nodes.get(childId);
+        return child && (child.role === 'assistant' || child.isAI);
+      });
+      
+      if (hasAiChild) {
+        invokeBtn.textContent = '🔄 Regenerar IA';
+        invokeBtn.disabled = false;
+      } else {
+        invokeBtn.textContent = '🤖 Invocar IA desde Nota';
+        invokeBtn.disabled = false;
+      }
+    } else {
+      invokeBtn.style.display = 'none';
+    }
+  }
+
   async generateSticker() {
     const panel = document.querySelector(SELECTORS.infoPanel);
     const nodeId = panel?.dataset.originatingNodeId;
@@ -1241,6 +1474,222 @@ export class UIManager {
       });
       
       document.body.appendChild(modal);
+    }
+  }
+
+  async invokeAiFromNote() {
+    const panel = document.querySelector(SELECTORS.infoPanel);
+    const nodeId = panel?.dataset.originatingNodeId;
+    if (!nodeId) return;
+
+    const node = this.tree.nodes.get(nodeId);
+    if (!node || (!node.isNote && node.role !== 'note')) {
+      console.error('❌ Can only invoke AI from notes');
+      return;
+    }
+
+    console.log('🤖 Invoking AI from note:', nodeId);
+
+    try {
+      setStatus('Generando respuesta IA desde nota…');
+      
+      // Cambiar temporalmente el nodo actual para generar respuesta desde la nota
+      const originalCurrentNodeId = this.tree.currentNodeId;
+      this.tree.currentNodeId = nodeId;
+      
+      // Generar respuesta de IA
+      const reply = await this.tree.generateAIResponse(nodeId);
+      
+      // Restaurar el nodo actual original
+      this.tree.currentNodeId = originalCurrentNodeId;
+      
+      if (reply) {
+        setStatus('Respuesta IA generada desde nota');
+        console.log('✅ AI response generated from note successfully');
+        
+        // Actualizar la interfaz
+        this.updateAll();
+        
+        // Actualizar el botón en el panel
+        this.updateAiInvokeButton(nodeId);
+        
+        setTimeout(clearStatus, 2000);
+      } else {
+        setStatus('Sin respuesta IA generada');
+        setTimeout(clearStatus, 2000);
+      }
+    } catch (error) {
+      console.error('❌ Failed to invoke AI from note:', error);
+      setStatus('Error al invocar IA desde nota');
+      setTimeout(clearStatus, 3000);
+    }
+  }
+
+  async generateTreeFromNode() {
+    const panel = document.querySelector(SELECTORS.infoPanel);
+    const nodeId = panel?.dataset.originatingNodeId;
+    if (!nodeId) return;
+
+    const node = this.tree.nodes.get(nodeId);
+    if (!node) {
+      console.error('❌ Node not found:', nodeId);
+      return;
+    }
+
+    console.log('🌳 Generating tree from node:', nodeId);
+
+    try {
+      setStatus('Analizando contenido para ramificación…');
+      
+      // Analizar el contenido del nodo para determinar si se puede ramificar
+      const analysisResult = await this.analyzeNodeForBranching(node);
+      
+      if (!analysisResult || !analysisResult.canBranch) {
+        setStatus('El contenido no se puede ramificar automáticamente');
+        setTimeout(clearStatus, 3000);
+        return;
+      }
+
+      setStatus(`Generando ${analysisResult.branches.length} ramas del árbol…`);
+      
+      // Crear nodos hijos para cada rama identificada
+      const newNodeIds = [];
+      for (const branch of analysisResult.branches) {
+        const childNodeId = await this.tree.addNode(
+          branch.content, 
+          nodeId, 
+          false, 
+          false, // isAI = false (será contenido derivado)
+          false, // isNote = false
+          'Ramificacion' // tipo = Ramificacion
+        );
+        newNodeIds.push(childNodeId);
+        console.log(`✅ Created branch node: ${childNodeId} - ${branch.title}`);
+      }
+
+      // Actualizar la interfaz
+      this.updateAll();
+      
+      setStatus(`Árbol generado: ${newNodeIds.length} ramas creadas`);
+      console.log('✅ Tree generation completed successfully');
+      
+      setTimeout(clearStatus, 3000);
+      
+    } catch (error) {
+      console.error('❌ Failed to generate tree from node:', error);
+      setStatus('Error al generar árbol desde nodo');
+      setTimeout(clearStatus, 3000);
+    }
+  }
+
+  async analyzeNodeForBranching(node) {
+    try {
+      console.log('🔍 Analyzing node content for branching potential...');
+      
+      // Preparar el prompt para el análisis
+      const analysisPrompt = `Analiza el siguiente contenido y determina si se puede dividir en múltiples temáticas o subtemas distintos:
+
+CONTENIDO A ANALIZAR:
+"${node.content}"
+
+INSTRUCCIONES:
+1. Si el contenido contiene múltiples temáticas, subtemas o puntos distintos que se pueden separar, responde con un JSON así:
+{
+  "canBranch": true,
+  "branches": [
+    {
+      "title": "Título de la temática 1",
+      "content": "Contenido específico de esta temática extraído del texto original"
+    },
+    {
+      "title": "Título de la temática 2", 
+      "content": "Contenido específico de esta temática extraído del texto original"
+    }
+  ]
+}
+
+2. Si el contenido es muy simple, corto, o trata de un solo tema, responde:
+{
+  "canBranch": false,
+  "reason": "Explicación de por qué no se puede ramificar"
+}
+
+Responde SOLO con el JSON válido, sin texto adicional.`;
+
+      // Hacer la petición al endpoint de chat
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'user',
+              content: analysisPrompt
+            }
+          ],
+          model: 'gpt-5-nano',
+            text: {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  reasoning: {
+    "effort": "medium"
+  }, 
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analysis API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('📥 Analysis API response received');
+
+      // Intentar parsear la respuesta como JSON
+      let analysisResult;
+      try {
+        // Limpiar la respuesta por si tiene texto extra
+        const cleanResponse = data.content.trim();
+        const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
+        const jsonStr = jsonMatch ? jsonMatch[0] : cleanResponse;
+        
+        analysisResult = JSON.parse(jsonStr);
+        console.log('✅ Analysis result parsed:', analysisResult);
+      } catch (parseError) {
+        console.error('❌ Failed to parse analysis response:', parseError);
+        console.log('Raw response:', data.content);
+        return { canBranch: false, reason: 'Error al analizar la respuesta' };
+      }
+
+      // Validar la estructura de la respuesta
+      if (typeof analysisResult.canBranch !== 'boolean') {
+        console.error('❌ Invalid analysis result structure');
+        return { canBranch: false, reason: 'Respuesta de análisis inválida' };
+      }
+
+      if (analysisResult.canBranch) {
+        if (!Array.isArray(analysisResult.branches) || analysisResult.branches.length < 2) {
+          console.error('❌ Invalid branches in analysis result');
+          return { canBranch: false, reason: 'Ramas insuficientes para ramificación' };
+        }
+
+        // Validar que cada rama tenga título y contenido
+        for (const branch of analysisResult.branches) {
+          if (!branch.title || !branch.content || 
+              typeof branch.title !== 'string' || typeof branch.content !== 'string') {
+            console.error('❌ Invalid branch structure:', branch);
+            return { canBranch: false, reason: 'Estructura de rama inválida' };
+          }
+        }
+      }
+
+      return analysisResult;
+
+    } catch (error) {
+      console.error('❌ Error analyzing node for branching:', error);
+      return { canBranch: false, reason: 'Error en el análisis: ' + error.message };
     }
   }
 

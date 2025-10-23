@@ -21,13 +21,26 @@ Esta aplicación implementa un **sistema de conversación no lineal** donde las 
 
 ```
 tu-proyecto/
-├── server.js                 # Backend API con Express
-├── package.json              # Dependencias del proyecto
-├── .env                      # Variables de entorno (no incluido)
+├── server.js                          # Backend API con Express
+├── package.json                       # Dependencias del proyecto
+├── .env                              # Variables de entorno (no incluido)
+├── DOCUMENTACION_LLM.md              # Esta documentación
+├── saved_chats/                      # Conversaciones exportadas
+│   └── conversational-tree_*.json
+├── stickers/                         # Imágenes generadas
+│   └── node_*_descripcion_*.jpg
 └── public/
-    ├── index.html            # Estructura HTML principal
-    ├── app.js                # Lógica principal del frontend
-    └── style.css             # Estilos CSS
+    ├── index.html                    # Estructura HTML principal
+    ├── app.js                        # Lógica principal del frontend
+    ├── style.css                     # Estilos CSS
+    └── modules/                      # Arquitectura modular
+        ├── conversationalTree.js    # Clases principales del árbol
+        ├── uiManager.js             # Gestión de interfaz y eventos
+        ├── treeRenderer.js          # Visualización D3.js
+        ├── openaiIntegration.js     # Integración con OpenAI
+        ├── splashScreen.js          # Pantalla de carga
+        ├── constants.js             # Constantes del sistema
+        └── utils.js                 # Utilidades generales
 ```
 
 ## 🧠 Conceptos Clave
@@ -44,10 +57,16 @@ Cada mensaje en la conversación es un "nodo" con esta estructura:
   timestamp: new Date(),           // Momento de creación
   embedding: [...],                // Vector de embeddings para similitud
   importance: 0.7,                 // Puntuación de importancia (0-1)
-  role: "user",                    // "user" o "assistant"
+  role: "user",                    // "user", "assistant", o "note"
   isAI: false,                     // true si fue generado por IA
+  isNote: false,                   // true si es una nota
+  tipo: "Prompt",                  // Tipo específico: "Prompt", "IA", "Ramificacion", "Notas"
   summary: "Saludo inicial...",    // Resumen generado automáticamente
-  keywords: ["saludo", "estado"]   // Palabras clave extraídas
+  keywords: ["saludo", "estado"],  // Palabras clave extraídas
+  // Soporte para imágenes/stickers:
+  image: null,                     // URL de la imagen generada
+  imagePrompt: null,               // Prompt usado para generar la imagen
+  imageGenerating: false           // Estado de generación
 }
 ```
 
@@ -58,10 +77,14 @@ La IA recibe contexto interno de tres fuentes para generar respuestas coherentes
 2. **Sibling Context**: Nodos hermanos (mismo padre)
 3. **Semantic Context**: Nodos semánticamente similares (usando embeddings)
 
-### 3. Roles de Usuario y Tipos de Nodo
-- **Usuario**: Representado por rombos rojos (⧫)
-- **IA**: Representado por círculos azules/verdes (●)
-- **Nodo Activo**: Resaltado con borde blanco
+### 3. Sistema de Tipos de Nodo
+El sistema implementa 4 tipos distintos de nodos con colores específicos:
+
+- **Prompt** (Usuario): Rombos rojos (⧫) - Mensajes/preguntas del usuario
+- **IA** (Asistente): Círculos rojos (●) - Respuestas generadas por IA
+- **Ramificación**: Círculos verdes (●) - Nodos creados automáticamente por análisis de contenido
+- **Notas**: Cuadrados amarillos (■) - Notas y comentarios que no invocan IA
+- **Nodo Activo**: Resaltado con borde blanco y glow verde
 
 ## 🔧 Componentes Técnicos
 
@@ -79,6 +102,29 @@ POST /api/chat
 // Genera respuesta de IA basada en contexto
 // Input: { messages: [...], system: "prompt", model: "gpt-4" }
 // Output: { content: "respuesta de la IA" }
+
+POST /api/generate-image
+// Genera imágenes usando DALL-E para stickers
+// Input: { prompt: "descripción de imagen", nodeId: "node_X" }
+// Output: { imageUrl: "stickers/node_X_*.jpg", prompt: "prompt usado" }
+
+POST /api/summary
+// Genera resúmenes automáticos para nodos
+// Input: { content: "contenido del nodo" }
+// Output: { summary: "resumen generado", keywords: ["palabra1", "palabra2"] }
+
+POST /api/export-chat
+// Exporta conversación al sistema de archivos
+// Input: { nodes: [...], filename: "chat_name.json" }
+// Output: { success: true, filename: "generated_filename.json" }
+
+GET /api/saved-chats
+// Lista conversaciones guardadas
+// Output: { chats: [{ filename: "...", created: "...", nodeCount: N }] }
+
+GET /api/saved-chats/:filename
+// Carga conversación específica
+// Output: { nodes: [...], version: 1, exportedAt: "..." }
 ```
 
 #### Características Clave:
@@ -115,6 +161,7 @@ class EnhancedConversationalTree extends ConversationalTree {
 
 // Gestión de interfaz de usuario
 class UIManager {
+  // Funciones principales existentes
   exportTree()                   // Exporta el árbol actual a JSON
   onImportFile()                 // Importa archivo JSON con formato de la app
   transformJsonFormat()          // Transforma JSON externo al formato interno
@@ -127,6 +174,16 @@ class UIManager {
   navigateToBranch()             // Navega entre ramas paralelas en vista chat
   addChatMessage()               // Añade mensajes desde la vista de chat
   updateChatBranchInfo()         // Actualiza información del nodo de expansión
+
+  // Nuevas funcionalidades
+  addRootMessage()               // Crea nodos raíz independientes
+  generateTreeFromNode()         // Analiza contenido y crea ramificaciones automáticas
+  analyzeNodeForBranching()      // Usa GPT-4 para identificar temáticas múltiples
+  generateSticker()              // Genera imágenes/stickers para nodos usando IA
+  viewSticker()                  // Muestra stickers generados en modal
+  invokeAiFromNote()             // Permite generar respuestas IA desde notas
+  createChatMessage()            // Renderiza mensajes con soporte para tipos de nodo
+  loadSavedChats()               // Carga lista de conversaciones guardadas
 }
 ```
 
@@ -151,22 +208,59 @@ function updateVisualization() {
 
 ## 🎮 Flujo de Interacción del Usuario
 
-### 1. Envío de Mensaje
+### 1. Envío de Mensaje Estándar
 ```
 Usuario escribe mensaje → 
-Nodo usuario creado → 
+Nodo tipo "Prompt" creado → 
 IA calcula contexto relevante → 
 IA genera respuesta → 
-Nodo IA creado → 
+Nodo tipo "IA" creado → 
 Visualización actualizada
 ```
 
-### 2. Ramificación (Branching)
+### 2. Creación de Notas
+```
+Usuario selecciona modelo "NOTAS" → 
+Escribe contenido → 
+Nodo tipo "Notas" creado (amarillo) → 
+No se genera respuesta IA → 
+Visualización actualizada
+```
+
+### 3. Ramificación Manual (Tradicional)
 ```
 Usuario hace click en "Branch" → 
 Selecciona punto de ramificación → 
 Escribe nuevo mensaje → 
 Nueva rama creada desde ese punto
+```
+
+### 4. Generación Automática de Árbol
+```
+Usuario selecciona nodo → 
+Click en "🌳 Generar Árbol" → 
+GPT-4 analiza contenido → 
+Identifica múltiples temáticas → 
+Crea nodos tipo "Ramificacion" (verdes) → 
+Árbol expandido automáticamente
+```
+
+### 5. Creación de Nodos Raíz
+```
+Usuario click en botón "Raíz" → 
+Escribe contenido → 
+Nodo raíz independiente creado → 
+Nueva conversación iniciada
+```
+
+### 6. Generación de Stickers/Imágenes
+```
+Usuario selecciona nodo → 
+Click en "🎨 Generar Sticker" → 
+IA analiza contenido → 
+Genera prompt de imagen → 
+Crea imagen usando DALL-E → 
+Sticker asociado al nodo
 ```
 
 ### 3. Navegación en Vista Árbol
@@ -256,14 +350,104 @@ function relevanceScore(node, target, proximity) {
 ```
 
 ### Componentes Visuales:
-- **Nodos IA**: Círculos azules con efecto hover
-- **Nodos Usuario**: Rombos rojos rotados 45°
+- **Nodos Prompt**: Rombos rojos rotados 45° (mensajes usuario)
+- **Nodos IA**: Círculos rojos con efecto hover (respuestas IA)
+- **Nodos Ramificación**: Círculos verdes (contenido auto-generado)
+- **Nodos Notas**: Cuadrados amarillos (anotaciones sin IA)
 - **Enlaces**: Líneas grises que se vuelven verdes en el path activo
 - **Tooltips**: Cajas flotantes con fondo semi-transparente
 - **Sidebar**: Panel izquierdo con chat history (expandible/contraíble)
 - **Botón Toggle**: Círculo verde ‹ para contraer/expandir sidebar con animación suave
-- **Vista Chat**: Interfaz lineal estilo ChatGPT/Claude con burbujas diferenciadas
+- **Vista Chat**: Interfaz lineal estilo ChatGPT/Claude con burbujas diferenciadas por tipo
 - **Navegación de Ramas**: Flechas ← → para alternar entre respuestas paralelas
+- **Botones de Eliminación**: ❌ que aparecen en hover con delay de 1 segundo
+- **Paneles de Información**: Centralizados con backdrop blur y acciones contextuales
+- **Stickers**: Imágenes integradas en nodos con visualización modal
+
+## 🆕 Funcionalidades Avanzadas
+
+### 1. Sistema de Tipos de Nodo
+La aplicación implementa un sistema robusto de tipos de nodo que determina tanto la apariencia como el comportamiento:
+
+#### Tipos Disponibles:
+- **Prompt**: Mensajes del usuario (rombos rojos)
+- **IA**: Respuestas de la IA (círculos rojos)  
+- **Ramificacion**: Contenido generado automáticamente (círculos verdes)
+- **Notas**: Anotaciones que no invocan IA (cuadrados amarillos)
+
+#### Implementación:
+```javascript
+// En ConversationalTree.addNode()
+const nodeType = tipo || (isNote ? 'Notas' : (isAI ? 'IA' : 'Prompt'));
+
+// En TreeRenderer
+nodeG.filter((d) => d.tipo === 'Ramificacion')
+  .append('circle')
+  .attr('class', 'node ramificacion');
+```
+
+### 2. Generación Automática de Árbol
+Utiliza GPT-4 para analizar contenido y crear ramificaciones inteligentes:
+
+#### Proceso:
+1. Usuario selecciona nodo y hace click en "🌳 Generar Árbol"
+2. `analyzeNodeForBranching()` envía contenido a GPT-4 con prompt específico
+3. IA identifica múltiples temáticas en el contenido
+4. Se crean nodos hijos tipo "Ramificacion" para cada temática
+5. Árbol se actualiza automáticamente
+
+#### Prompt de Análisis:
+```javascript
+const analysisPrompt = `Analiza el siguiente contenido y determine si se puede dividir en múltiples temáticas...
+CRITERIOS PARA RAMIFICAR:
+- Al menos 2 temáticas claramente diferenciadas
+- Cada rama debe tener contenido sustancial
+- Máximo 5 ramas para evitar fragmentación excesiva`;
+```
+
+### 3. Sistema de Notas Inteligente
+Las notas ofrecen funcionalidad especial sin invocar IA automáticamente:
+
+#### Características:
+- **Creación**: Seleccionar modelo "📝 NOTAS" y escribir contenido
+- **Comportamiento**: No genera respuesta IA automática
+- **Flexibilidad**: Pueden insertarse en cualquier punto del árbol
+- **Invocación Manual**: Botón "🤖 Invocar IA desde Nota" para generar respuesta cuando se desee
+- **Boost de Relevancia**: Las notas reciben puntuación extra en cálculos de contexto
+
+### 4. Generación de Stickers/Imágenes
+Sistema de generación de imágenes representativas usando DALL-E:
+
+#### Flujo:
+1. Usuario selecciona nodo y hace click en "🎨 Generar Sticker"
+2. IA analiza contenido y genera prompt descriptivo optimizado
+3. DALL-E crea imagen basada en el prompt
+4. Imagen se almacena y asocia al nodo
+5. Botón "👁️ Ver Sticker" permite visualización en modal
+
+#### Almacenamiento:
+```javascript
+node.image = "stickers/node_X_description_timestamp.jpg";
+node.imagePrompt = "Generated descriptive prompt for DALL-E";
+node.imageGenerating = false; // Estado de generación
+```
+
+### 5. Gestión de Nodos Raíz
+Permite crear múltiples puntos de inicio independientes:
+
+#### Funcionalidad:
+- **Botón "Raíz"**: Crea nodo sin padre (parentId: null)
+- **Conversaciones Paralelas**: Múltiples árboles en la misma sesión
+- **Gestión Inteligente**: Si no hay nodos raíz, el primero se convierte en principal
+
+### 6. Sistema de Eliminación Mejorado
+Eliminación de nodos con confirmación y efectos visuales:
+
+#### Características:
+- **Hover con Delay**: Botón ❌ aparece al hacer hover y permanece 1 segundo adicional
+- **Eliminación Recursiva**: Elimina nodo y todos sus descendientes
+- **Confirmación**: Dialog de confirmación con preview del contenido
+- **Protección**: No permite eliminar el último nodo raíz si es el único
 
 ## 🔄 Sistema de Persistencia
 
@@ -372,6 +556,20 @@ npm start                   # Iniciar servidor
 6. **Transform JSON**: Convierte archivos JSON externos al formato interno
 7. **Toggle Sidebar**: Botón ‹ en el sidebar para expandir/contraer el panel lateral
 
+### Nuevos Controles de Nodo:
+
+8. **🌳 Generar Árbol**: Analiza el contenido del nodo y crea ramificaciones automáticas
+9. **🎨 Generar Sticker**: Crea imagen representativa del contenido del nodo
+10. **👁️ Ver Sticker**: Visualiza sticker generado en modal expandido
+11. **🤖 Invocar IA desde Nota**: Genera respuesta IA usando una nota como contexto
+12. **Botón Raíz**: Crea nuevo nodo raíz independiente
+13. **❌ Eliminar Nodo**: Aparece al hacer hover, elimina nodo y descendientes (con delay de 1 segundo)
+
+### Selector de Modelos:
+
+- **GPT-4 Turbo, GPT-4, GPT-5 Nano/Mini/Full**: Modelos de IA estándar
+- **📝 NOTAS**: Modo especial que no invoca IA, crea nodos amarillos tipo "Notas"
+
 **Nota**: Los botones "CHANGE VIEW" y "Vista Árbol/Chat" son independientes y cumplen funciones diferentes.
 
 ### Atajos de Teclado:
@@ -381,17 +579,24 @@ npm start                   # Iniciar servidor
 
 ### Para Añadir Nuevas Funcionalidades:
 
-1. **Nuevos Tipos de Nodo**: Modificar `role` y añadir lógica en `updateVisualization()`
-2. **Algoritmos de Layout**: Reemplazar lógica en `updateVisualization()`
-3. **Nuevos Modelos de IA**: Modificar endpoints en `server.js`
+1. **Nuevos Tipos de Nodo**: 
+   - Modificar `addNode()` en `ConversationalTree` para incluir nuevo tipo
+   - Añadir lógica de renderizado en `TreeRenderer` para nuevas formas/colores
+   - Actualizar `createChatMessage()` en `UIManager` para nuevos estilos de chat
+   - Definir estilos CSS para el nuevo tipo
+
+2. **Algoritmos de Layout**: Reemplazar lógica en `TreeRenderer.update()`
+3. **Nuevos Modelos de IA**: Modificar endpoints en `server.js` y selector en HTML
 4. **Persistencia en DB**: Reemplazar sistema de export/import
 5. **Colaboración Tiempo Real**: Añadir WebSockets
 6. **Nuevos Formatos de Transformación**: Extender `transformJsonFormat()` en `UIManager`
+7. **Nuevas Funciones de Análisis**: Seguir patrón de `analyzeNodeForBranching()`
+8. **Integraciones de IA**: Añadir endpoints en `server.js` y funciones en `UIManager`
 
 ### Hooks de Eventos Importantes:
 ```javascript
-// Al añadir nodo
-tree.addNode(content, parentId) 
+// Al añadir nodo (con nuevo sistema de tipos)
+tree.addNode(content, parentId, isBranch, isAI, isNote, tipo)
 
 // Al cambiar nodo activo  
 tree.currentNodeId = newId;
@@ -402,4 +607,13 @@ tree.generateAIResponse()
 
 // Al exportar/importar
 exportTree() / onImportFile()
+
+// Nuevos hooks para funcionalidades avanzadas
+uiManager.generateTreeFromNode()     // Ramificación automática
+uiManager.generateSticker()          // Generación de imágenes
+uiManager.addRootMessage()          // Creación de nodos raíz
+uiManager.invokeAiFromNote()        // IA desde notas
+
+// Eventos de eliminación
+tree.deleteNode(nodeId)             // Eliminación recursiva con confirmación
 ```

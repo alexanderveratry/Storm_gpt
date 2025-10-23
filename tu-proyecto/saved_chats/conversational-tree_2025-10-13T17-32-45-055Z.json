@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "exportedAt": "2025-10-13T17:32:45.033Z",
+  "nodes": [
+    {
+      "id": "node_0",
+      "content": "¿Dime en que puedo ayudarte hoy?",
+      "parentId": null,
+      "timestamp": "2025-10-13T13:35:42.950Z",
+      "summary": "¿Dime, puedo, ayudarte, hoy?",
+      "keywords": [
+        "¿Dime",
+        "puedo",
+        "ayudarte",
+        "hoy?"
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "assistant",
+      "isAI": true,
+      "isNote": false,
+      "tipo": "IA"
+    },
+    {
+      "id": "node_1",
+      "content": "actuales candidatos a presidente Chile. DAME UN TOP 4 CON más grandes ventajas y desventajas",
+      "parentId": "node_0",
+      "timestamp": "2025-10-13T13:36:21.364Z",
+      "summary": "¿A qué fecha? ¿Elecciones 2025? Confírmame candidatos para darte Top 4 con pros/contras.",
+      "keywords": [
+        "¿A qué fecha? ¿Elecciones 2025? Confírmame candidatos para darte Top 4 con pros/contras."
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Prompt"
+    },
+    {
+      "id": "node_2",
+      "content": "A octubre de 2025, entre los nombres mejor posicionados/aspirantes a La Moneda destacan:\n\n1) Evelyn Matthei (Chile Vamos – UDI)\n- Ventajas: alta experiencia y gestión bien evaluada; perfil moderado que puede captar voto de centro.\n- Desventajas: asociación a la derecha tradicional y posibles tensiones con Republicanos; riesgo de “techo” en segunda vuelta.\n\n2) José Antonio Kast (Partido Republicano)\n- Ventajas: base fiel y movilizada; mensaje claro en seguridad/orden; liderazgo opositor consolidado.\n- Desventajas: alto rechazo en el electorado moderado; dificultades para tejer alianzas amplias.\n\n3) Carolina Tohá (PPD/coalición oficialista)\n- Ventajas: amplia experiencia ejecutiva (Interior, alcaldía); capacidad de articulación política; perfil de centroizquierda moderado.\n- Desventajas: desgaste por la situación de seguridad durante su gestión y por identificación con el gobierno en ejercicio.\n\n4) Franco Parisi (Partido de la Gente)\n- Ventajas: fuerte llegada digital y voto anti‑establishment; recordación alta por desempeño previo.\n- Desventajas: controversias legales y residencia fuera de Chile que dificultan campaña territorial; estructura partidaria irregular.\n\nNota: Las inscripciones oficiales ante el Servel y las alianzas pueden cambiar. Si quieres, te doy la lista oficial más reciente y un comparativo por temas (economía, seguridad, pensiones).",
+      "parentId": "node_1",
+      "timestamp": "2025-10-13T13:37:02.634Z",
+      "summary": "Evelyn Matthei (Chile Vamos–UDI): experiencia/gestión, perfil moderado, techo en segunda vuelta, tensiones con Republicanos., José Antonio Kast (Partido Republicano): base fiel/movilizada, seguridad/orden, rechazo en moderados, alianzas difíciles., Carolina Tohá (PPD/coalición oficialista): experiencia ejecutiva, articulación política",
+      "keywords": [
+        "Evelyn Matthei (Chile Vamos–UDI): experiencia/gestión",
+        "perfil moderado",
+        "techo en segunda vuelta",
+        "tensiones con Republicanos.",
+        "José Antonio Kast (Partido Republicano): base fiel/movilizada",
+        "seguridad/orden",
+        "rechazo en moderados",
+        "alianzas difíciles.",
+        "Carolina Tohá (PPD/coalición oficialista): experiencia ejecutiva",
+        "articulación política"
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "assistant",
+      "isAI": true,
+      "isNote": false,
+      "tipo": "IA"
+    },
+    {
+      "id": "node_21",
+      "content": "- Ventajas: alta experiencia y gestión bien evaluada; perfil moderado que puede captar voto de centro.\n- Desventajas: asociación a la derecha tradicional y posibles tensiones con Republicanos; riesgo de “techo” en segunda vuelta.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T17:29:47.083Z",
+      "summary": "Ventajas: experiencia/gestión, moderado, voto de centro. Desventajas: derecha tradicional, tensiones con Republicanos, techo en segunda vuelta.",
+      "keywords": [
+        "Ventajas: experiencia/gestión",
+        "moderado",
+        "voto de centro. Desventajas: derecha tradicional",
+        "tensiones con Republicanos",
+        "techo en segunda vuelta."
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Ramificacion"
+    },
+    {
+      "id": "node_22",
+      "content": "- Ventajas: base fiel y movilizada; mensaje claro en seguridad/orden; liderazgo opositor consolidado.\n- Desventajas: alto rechazo en el electorado moderado; dificultades para tejer alianzas amplias.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T17:29:47.746Z",
+      "summary": "Base fiel y movilizada, Mensaje claro seguridad/orden, Liderazgo opositor consolidado, Rechazo alto entre moderados, Dificultades para alianzas amplias",
+      "keywords": [
+        "Base fiel y movilizada",
+        "Mensaje claro seguridad/orden",
+        "Liderazgo opositor consolidado",
+        "Rechazo alto entre moderados",
+        "Dificultades para alianzas amplias"
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Ramificacion"
+    },
+    {
+      "id": "node_23",
+      "content": "- Ventajas: amplia experiencia ejecutiva (Interior, alcaldía); capacidad de articulación política; perfil de centroizquierda moderado.\n- Desventajas: desgaste por la situación de seguridad durante su gestión y por identificación con el gobierno en ejercicio.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T17:29:48.242Z",
+      "summary": "Ventajas: amplia experiencia ejecutiva, capacidad de articulación política, perfil centroizquierda moderado. Desventajas: desgaste por seguridad y por identificación con el gobierno en ejercicio.",
+      "keywords": [
+        "Ventajas: amplia experiencia ejecutiva",
+        "capacidad de articulación política",
+        "perfil centroizquierda moderado. Desventajas: desgaste por seguridad y por identificación con el gobierno en ejercicio."
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Ramificacion"
+    },
+    {
+      "id": "node_24",
+      "content": "- Ventajas: fuerte llegada digital y voto anti‑establishment; recordación alta por desempeño previo.\n- Desventajas: controversias legales y residencia fuera de Chile que dificultan campaña territorial; estructura partidaria irregular.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T17:29:49.096Z",
+      "summary": "Ventajas: llegada digital, voto anti, establishment, alto rendimiento previo. Desventajas: controversias legales, residencia fuera de Chile, campaña territorial dificultada, estructura partidaria irregular.",
+      "keywords": [
+        "Ventajas: llegada digital",
+        "voto anti",
+        "establishment",
+        "alto rendimiento previo. Desventajas: controversias legales",
+        "residencia fuera de Chile",
+        "campaña territorial dificultada",
+        "estructura partidaria irregular."
+      ],
+      "sticker": "",
+      "imagePrompt": null,
+      "role": "user",
+      "isAI": false,
+      "isNote": false,
+      "tipo": "Ramificacion"
+    }
+  ]
+}

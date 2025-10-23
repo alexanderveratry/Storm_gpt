@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "exportedAt": "2025-09-24T22:32:38.559Z",
+  "nodes": [
+    {
+      "id": "node_0",
+      "content": "¿Dime en que puedo ayudarte hoy?",
+      "parentId": null,
+      "timestamp": "2025-09-24T22:31:41.306Z",
+      "summary": "¿Dime, puedo, ayudarte, hoy?",
+      "keywords": [
+        "¿Dime",
+        "puedo",
+        "ayudarte",
+        "hoy?"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_1",
+      "content": "un gato",
+      "parentId": null,
+      "timestamp": "2025-09-24T22:31:47.228Z",
+      "summary": "un gato",
+      "keywords": [],
+      "sticker": "/stickers/node_1_gato_2025-09-24T22-32-05-742Z.jpg"
+    },
+    {
+      "id": "node_2",
+      "content": "En inglés: \"a cat\". ¿Qué quieres hacer con eso?",
+      "parentId": "node_1",
+      "timestamp": "2025-09-24T22:31:52.416Z",
+      "summary": "inglés:, cat\"., ¿Qué, quieres, hacer, eso?",
+      "keywords": [
+        "inglés:",
+        "cat\".",
+        "¿Qué",
+        "quieres",
+        "hacer",
+        "eso?"
+      ],
+      "sticker": "/stickers/node_2_ingl_s___cat_____qu___quieres__hacer__eso__2025-09-24T22-32-16-070Z.jpg"
+    }
+  ]
+}

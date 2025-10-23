@@ -325,6 +325,19 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .input-area button { background: var(--color-accent-alt); color:#fff; cursor:pointer; transition: background var(--transition-fast); }
 .input-area button:hover, .input-area button:focus-visible { background:#005bb5; }
 
+/* Estilos específicos para el botón Raíz */
+.root-btn {
+  background: var(--color-accent) !important;
+  color: #000 !important;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+.root-btn:hover, .root-btn:focus-visible {
+  background: #b3ff00 !important;
+  color: #000 !important;
+}
+
 .model-selector { border:1px solid #444; }
 
 .branch-btn { background: var(--color-danger) !important; font-size:12px; padding:5px 10px; }
@@ -457,6 +470,40 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-bottom-left-radius: 6px;
+}
+
+.chat-message.note .message-bubble {
+  background: #ffd700;
+  color: #1a1a1a;
+  border: 1px solid #ffed4e;
+  border-radius: 12px;
+  font-weight: 450;
+  position: relative;
+}
+
+.chat-message.note .message-bubble::before {
+  content: "📝";
+  position: absolute;
+  top: -2px;
+  left: 8px;
+  font-size: 12px;
+}
+
+.chat-message.ramificacion .message-bubble {
+  background: #00c851;
+  color: #ffffff;
+  border: 1px solid #7bdcb5;
+  border-radius: 12px;
+  font-weight: 450;
+  position: relative;
+}
+
+.chat-message.ramificacion .message-bubble::before {
+  content: "🌳";
+  position: absolute;
+  top: -2px;
+  left: 8px;
+  font-size: 12px;
 }
 
 .message-header {
@@ -620,8 +667,33 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   opacity: 0.6;
 }
 
-.chat-send-btn {
+.chat-root-btn {
   background: var(--color-accent);
+  color: var(--color-bg);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chat-root-btn:hover {
+  background: #b3ff00;
+  transform: scale(1.05);
+}
+
+.chat-root-btn:active {
+  transform: scale(0.95);
+}
+
+.chat-send-btn {
+  background: var(--color-accent-alt);
   color: var(--color-bg);
   border: none;
   width: 44px;
@@ -638,7 +710,7 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 }
 
 .chat-send-btn:hover {
-  background: var(--color-accent-alt);
+  background: #005bb5;
   transform: scale(1.05);
 }
 
@@ -801,16 +873,32 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 }
 
 /* Style the node content display */
-.node-content-display {
-  line-height: 1.6;
-  padding: 16px;
-  background: rgba(255,255,255,0.05);
-  border-radius: var(--radius-md);
-  border-left: 4px solid var(--color-accent);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-size: 1.1rem;
-  color: var(--color-text);
+/* --- Tipografía y layout base --- */
+.node-content-display{
+  /* Layout */
+  max-width: var(--measure, 70ch);
+  margin-inline: auto;
+  padding: clamp(16px, 2.5vw, 28px);
+
+  /* Fondo/borde originales, con mejoras suaves */
+  background: var(--panel-bg, rgba(255,255,255,0.05));
+  border-radius: var(--radius-md, 14px);
+  border-left: 4px solid var(--color-accent, #7c3aed);
+
+  /* Texto */
+  color: var(--color-text, #eaeaea);
+  font: 400 1rem/1.75 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Inter, system-ui, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "liga","kern","ss01","cv01";
+  hanging-punctuation: first;
+  white-space: normal;         /* mejor que pre-wrap para tipografía */
+  overflow-wrap: anywhere;     /* corta palabras largas */
+  hyphens: auto;               /* guiona palabras cuando aplique */
+  transition: color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 20px 40px -20px rgba(0,0,0,.35);
 }
 
 /* Node Actions */
@@ -960,15 +1048,54 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
 .node { fill: var(--color-accent-alt); stroke: var(--color-accent); stroke-width:2; cursor:pointer; transition: all 0.3s; }
 .node:hover { fill:#0088ff; }
 .node.active { fill: var(--color-accent); stroke:#fff; stroke-width:3; }
-.node.user { fill:#ff2d55; stroke:#ffa3b5; }
+
+/* Nodos de tipo Prompt (rojo) */
+.node.prompt { fill:#ff2d55; stroke:#ffa3b5; }
+.node.prompt:hover { fill:#ff5f7a; }
+.node.prompt.active { fill:#ff5f7a; stroke:#fff; }
+
+/* Nodos de tipo IA (rojo) */
+.node.ia { fill:#00ffff; stroke:#ffa3b5; }
+.node.ia:hover { fill:#00ffff; }
+.node.ia.active { fill:#00ffff; stroke:#fff; }
+
+/* Nodos de tipo Notas (amarillo) */
+.node.note { fill:#ffd700; stroke:#ffed4e; stroke-width:2; }
+.node.note:hover { fill:#ffed4e; }
+.node.note.active { fill:#ffd700; stroke:#fff; stroke-width:3; }
+
+/* Nodos de tipo Ramificacion (verde) */
+.node.ramificacion { fill:#00c851; stroke:#7bdcb5; }
+.node.ramificacion:hover { fill:#00ff41; }
+.node.ramificacion.active { fill:#00ff41; stroke:#fff; }
+
+/* Mantener compatibilidad con estilos antiguos */
+.node.user { fill:#ff2d2d; stroke:#ffa3b5; }
 .node.user.active { fill:#ff5f7a; stroke:#fff; }
 .link { stroke:#58f3fe; stroke-width:2; opacity:0.9; }
 .link.active-path { stroke: var(--color-accent); stroke-width:3; opacity:1; }
+/* nodos css*/
+.node-label .label-box { background:rgba(35,43,56,0.98); border:1px solid var(--color-border); color:var(--color-text); font: size 24px; line-height:1.4; padding:8px 12px; border-radius: var(--radius-md); min-width:120px; max-width:200px; height:auto; min-height:40px; overflow:visible; white-space:normal; word-wrap:break-word; }
 
-.node-label .label-box { background:rgba(35,43,56,0.98); border:1px solid var(--color-border); color:var(--color-text); font-size:8px; line-height:1.4; padding:8px 12px; border-radius: var(--radius-md); min-width:120px; max-width:200px; height:auto; min-height:40px; overflow:visible; white-space:normal; word-wrap:break-word; }
+/* Wrapper boxes - make completely transparent */
+.wrapper-layer .node-wrapper-box { 
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  stroke: transparent !important;
+  stroke-opacity: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
 
-.wrapper-layer .node-wrapper-box { fill: rgba(173, 216, 230, 0.22); stroke: #8ad9ff; stroke-width:1.5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
-.wrapper-layer .node-wrapper-box.active { stroke:#ffffff; stroke-width:2px; fill: rgba(173,216,230,0.32); }
+.wrapper-layer .node-wrapper-box.active {
+  fill: transparent !important;
+  fill-opacity: 0 !important;
+  stroke: transparent !important;
+  stroke-opacity: 0 !important;
+  opacity: 0 !important;
+}
+
 
 /* Responsive */
 @media (max-width: 1100px) { 
@@ -991,4 +1118,29 @@ body { font-family: var(--font-stack); background: var(--color-bg); color: var(-
   .sidebar { width: 280px; padding: 16px; }
   .sidebar.collapsed { width: 35px; padding: 8px 2px; }
   .sidebar-toggle { width: 24px; height: 24px; font-size: 14px; }
+}
+
+/* Estilos para botones de eliminación en nodos */
+.delete-button-bg {
+  fill: var(--color-danger);
+  stroke: #fff;
+  stroke-width: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-button-bg:hover {
+  fill: #ff4757;
+  transform: scale(1.1);
+}
+
+.delete-button-x {
+  fill: #fff;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: none;
+}
+
+.delete-button-group {
+  transition: opacity 0.2s ease;
 }

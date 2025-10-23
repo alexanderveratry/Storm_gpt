@@ -78,6 +78,12 @@ export class ConversationalTree {
     score += proxScore;
     const hours = Math.abs(node.timestamp - target.timestamp) / 36e5;
     score += Math.max(0, 0.2 - hours * 0.01);
+    
+    // Boost para notas: las notas son especialmente relevantes para el contexto
+    if (node.isNote || node.role === 'note') {
+      score += 0.15; // Pequeño boost para notas
+    }
+    
     return score;
   }
 
@@ -116,17 +122,18 @@ export class ConversationalTree {
 
   // Devuelve los datos del árbol para renderizado (nodos y enlaces)
   getTreeData() {
-    if (!this.rootId) return { nodes: [], links: [] };
-
     const nodes = [];
     const links = [];
 
+    // Incluir todos los nodos, incluso si no hay rootId definido
     this.nodes.forEach((n) => {
       nodes.push({
         id: n.id,
         content: n.content,
         importance: n.importance,
-        role: n.role ?? (n.isAI ? 'assistant' : 'user'),
+        role: n.role ?? (n.isAI ? 'assistant' : (n.isNote ? 'note' : 'user')),
+        isNote: n.isNote || false,
+        tipo: n.tipo || (n.isNote ? 'Notas' : (n.isAI ? 'IA' : 'Prompt')), // Incluir tipo
         parentId: n.parentId,
         layoutX: n.layoutX,
         layoutY: n.layoutY,
@@ -137,6 +144,17 @@ export class ConversationalTree {
     });
 
     return { nodes, links };
+  }
+
+  // Obtener todos los nodos raíz (nodos sin padre)
+  getRootNodes() {
+    const rootNodes = [];
+    this.nodes.forEach((node, id) => {
+      if (node.parentId === null) {
+        rootNodes.push(id);
+      }
+    });
+    return rootNodes;
   }
 }
 
@@ -273,11 +291,23 @@ export class EnhancedConversationalTree extends ConversationalTree {
     return this.getNodeViewState(nodeId);
   }
 
-  async addNode(content, parentId = null, isBranch = false, isAI = false) {
+  async addNode(content, parentId = null, isBranch = false, isAI = false, isNote = false, tipo = null) {
     const id = `node_${this.idCounter++}`;
-    const role = isAI ? 'assistant' : 'user';
+    const role = isAI ? 'assistant' : (isNote ? 'note' : 'user');
+    
+    // Determinar el tipo del nodo
+    let nodeType = tipo;
+    if (!nodeType) {
+      if (isNote) {
+        nodeType = 'Notas';
+      } else if (isAI) {
+        nodeType = 'IA';
+      } else {
+        nodeType = 'Prompt';
+      }
+    }
 
-    console.log(`🌳 Adding new node: ${id} (${role}) with parent: ${parentId}`);
+    console.log(`🌳 Adding new node: ${id} (${role}, tipo: ${nodeType}) with parent: ${parentId}`);
 
     let embedding;
     try {
@@ -296,6 +326,8 @@ export class EnhancedConversationalTree extends ConversationalTree {
       importance: this._importance(content ?? ''),
       isAI,
       role,
+      isNote, // Nueva propiedad para identificar notas
+      tipo: nodeType, // Nuevo atributo: Prompt, IA, Ramificacion, Notas
       summary: null,
       keywords: [],
       // Nuevo: soporte para imágenes
@@ -324,6 +356,145 @@ export class EnhancedConversationalTree extends ConversationalTree {
 
     this.generateSummaryForNode(id).catch((err) => console.warn('Summary generation failed', err));
     return id;
+  }
+
+  // Crear un nuevo nodo raíz independiente
+  async addRootNode(content, isAI = false, isNote = false, tipo = null) {
+    const id = `node_${this.idCounter++}`;
+    const role = isAI ? 'assistant' : (isNote ? 'note' : 'user');
+    
+    // Determinar el tipo del nodo
+    let nodeType = tipo;
+    if (!nodeType) {
+      if (isNote) {
+        nodeType = 'Notas';
+      } else if (isAI) {
+        nodeType = 'IA';
+      } else {
+        nodeType = 'Prompt';
+      }
+    }
+
+    console.log(`🌱 Creating new root node: ${id} (${role}, tipo: ${nodeType})`);
+
+    let embedding;
+    try {
+      embedding = await this.openai.getEmbedding(content);
+    } catch {
+      embedding = this.openai.fallbackEmbedding(content ?? '');
+    }
+
+    const node = {
+      id,
+      content: content ?? '',
+      parentId: null, // Los nodos raíz no tienen padre
+      children: [],
+      timestamp: new Date(),
+      embedding,
+      importance: this._importance(content ?? ''),
+      isAI,
+      role,
+      isNote, // Nueva propiedad para identificar notas
+      tipo: nodeType, // Nuevo atributo: Prompt, IA, Ramificacion, Notas
+      summary: null,
+      keywords: [],
+      image: null,
+      imagePrompt: null,
+      imageGenerating: false,
+    };
+
+    this.nodes.set(id, node);
+
+    // Si no hay nodos raíz, este se convierte en el principal
+    if (!this.rootId) {
+      this.rootId = id;
+      console.log(`🌱 Set ${id} as main root node`);
+    }
+
+    // Establecer como nodo actual si es de usuario
+    if (!isAI) {
+      this.currentNodeId = id;
+      console.log(`🎯 Focus changed to new root node: ${id}`);
+    }
+
+    this.generateSummaryForNode(id).catch((err) => console.warn('Summary generation failed', err));
+    return id;
+  }
+
+  // Eliminar un nodo y todos sus descendientes
+  deleteNode(nodeId) {
+    const node = this.nodes.get(nodeId);
+    if (!node) {
+      console.warn(`⚠️ Cannot delete node ${nodeId}: node not found`);
+      return false;
+    }
+
+    console.log(`🗑️ Deleting node: ${nodeId} and its descendants`);
+
+    // Función recursiva para eliminar nodos y sus hijos
+    const deleteRecursively = (id) => {
+      const currentNode = this.nodes.get(id);
+      if (!currentNode) return;
+
+      // Eliminar todos los hijos primero
+      for (const childId of currentNode.children) {
+        deleteRecursively(childId);
+      }
+
+      // Limpiar estados y referencias
+      this.nodeViewStates.delete(id);
+      if (this.pendingNodeStates.has(id)) {
+        // Cancelar operaciones pendientes para este nodo
+        const pendingOps = this.pendingNodeStates.get(id);
+        for (const opId of pendingOps) {
+          this.cancelOperation(opId, 'node deleted');
+        }
+        this.pendingNodeStates.delete(id);
+      }
+
+      // Eliminar el nodo
+      this.nodes.delete(id);
+      console.log(`🗑️ Deleted node: ${id}`);
+    };
+
+    // Remover el nodo de la lista de hijos del padre
+    if (node.parentId && this.nodes.has(node.parentId)) {
+      const parent = this.nodes.get(node.parentId);
+      const childIndex = parent.children.indexOf(nodeId);
+      if (childIndex > -1) {
+        parent.children.splice(childIndex, 1);
+        console.log(`🗑️ Removed ${nodeId} from parent ${node.parentId} children list`);
+      }
+    }
+
+    // Si se está eliminando el nodo raíz, buscar un nuevo nodo raíz
+    if (nodeId === this.rootId) {
+      // Buscar otro nodo raíz (nodo sin padre)
+      let newRootId = null;
+      for (const [id, n] of this.nodes) {
+        if (n.parentId === null && id !== nodeId) {
+          newRootId = id;
+          break;
+        }
+      }
+      this.rootId = newRootId;
+      console.log(`🌱 New root node set to: ${newRootId || 'none'}`);
+    }
+
+    // Si se está eliminando el nodo actual, cambiar a otro nodo
+    if (nodeId === this.currentNodeId) {
+      if (node.parentId && this.nodes.has(node.parentId)) {
+        this.currentNodeId = node.parentId;
+      } else {
+        this.currentNodeId = this.rootId;
+      }
+      console.log(`🎯 Current node changed to: ${this.currentNodeId}`);
+    }
+
+    // Eliminar el nodo y todos sus descendientes
+    deleteRecursively(nodeId);
+
+    return true;
   }
 
   async generateSummaryForNode(nodeId) { 
@@ -611,7 +782,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
             const parentId = this.findFallbackParent(targetNodeId);
             if (parentId) {
               console.log(`🔄 Attaching response to fallback parent ${parentId}`);
-              const newNodeId = await this.addNode(reply, parentId, false, true);
+              const newNodeId = await this.addNode(reply, parentId, false, true, false, 'IA');
               this.completeOperation(opId, true, { newNodeId, fallbackParent: parentId });
               return reply;
             }
@@ -620,7 +791,7 @@ export class EnhancedConversationalTree extends ConversationalTree {
         }
 
         // Attach to the original target node (never to current selection)
-        const newNodeId = await this.addNode(reply, targetNodeId, false, true);
+        const newNodeId = await this.addNode(reply, targetNodeId, false, true, false, 'IA');
         this.completeOperation(opId, true, { newNodeId });
         console.log(`✅ AI response attached to target node ${targetNodeId} as ${newNodeId}`);
       } else {
@@ -692,6 +863,22 @@ export class EnhancedConversationalTree extends ConversationalTree {
       const numeric = parseInt(id.split('_')[1] ?? '0', 10);
       this.idCounter = Math.max(this.idCounter, numeric + 1);
 
+      // Determinar propiedades adicionales basadas en el rol o datos originales
+      const isAI = n.isAI !== undefined ? n.isAI : (role === 'assistant');
+      const isNote = n.isNote !== undefined ? n.isNote : (role === 'note' || n.role === 'note');
+      
+      // Determinar el tipo del nodo
+      let nodeType = n.tipo; // Usar tipo si ya existe en los datos
+      if (!nodeType) {
+        if (isNote) {
+          nodeType = 'Notas';
+        } else if (isAI) {
+          nodeType = 'IA';
+        } else {
+          nodeType = 'Prompt';
+        }
+      }
+
       const node = {
         id,
         content: n.content ?? '',
@@ -700,13 +887,15 @@ export class EnhancedConversationalTree extends ConversationalTree {
         timestamp: new Date(n.timestamp ?? Date.now()),
         embedding,
         importance: this._importance(n.content ?? ''),
-        isAI: role === 'assistant',
+        isAI,
         role,
+        isNote, // Incluir propiedad isNote
+        tipo: nodeType, // Asignar tipo correcto: Prompt, IA, Ramificacion, Notas
         summary: n.summary ?? null,
         keywords: n.keywords ?? [],
         // Nuevo: soporte para imágenes
         image: n.sticker ?? null, // Mapear 'sticker' del JSON a 'image' interno
-        imagePrompt: null, // Se establecerá si se regenera
+        imagePrompt: n.imagePrompt ?? null, // Incluir imagePrompt si existe
         imageGenerating: false,
       };
 

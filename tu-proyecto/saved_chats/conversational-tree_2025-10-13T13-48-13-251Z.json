@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "exportedAt": "2025-10-13T13:48:13.242Z",
+  "nodes": [
+    {
+      "id": "node_0",
+      "content": "¿Dime en que puedo ayudarte hoy?",
+      "parentId": null,
+      "timestamp": "2025-10-13T13:35:42.950Z",
+      "summary": "¿Dime, puedo, ayudarte, hoy?",
+      "keywords": [
+        "¿Dime",
+        "puedo",
+        "ayudarte",
+        "hoy?"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_1",
+      "content": "actuales candidatos a presidente Chile. DAME UN TOP 4 CON más grandes ventajas y desventajas",
+      "parentId": "node_0",
+      "timestamp": "2025-10-13T13:36:21.364Z",
+      "summary": "¿A qué fecha? ¿Elecciones 2025? Confírmame candidatos para darte Top 4 con pros/contras.",
+      "keywords": [
+        "¿A qué fecha? ¿Elecciones 2025? Confírmame candidatos para darte Top 4 con pros/contras."
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_2",
+      "content": "A octubre de 2025, entre los nombres mejor posicionados/aspirantes a La Moneda destacan:\n\n1) Evelyn Matthei (Chile Vamos – UDI)\n- Ventajas: alta experiencia y gestión bien evaluada; perfil moderado que puede captar voto de centro.\n- Desventajas: asociación a la derecha tradicional y posibles tensiones con Republicanos; riesgo de “techo” en segunda vuelta.\n\n2) José Antonio Kast (Partido Republicano)\n- Ventajas: base fiel y movilizada; mensaje claro en seguridad/orden; liderazgo opositor consolidado.\n- Desventajas: alto rechazo en el electorado moderado; dificultades para tejer alianzas amplias.\n\n3) Carolina Tohá (PPD/coalición oficialista)\n- Ventajas: amplia experiencia ejecutiva (Interior, alcaldía); capacidad de articulación política; perfil de centroizquierda moderado.\n- Desventajas: desgaste por la situación de seguridad durante su gestión y por identificación con el gobierno en ejercicio.\n\n4) Franco Parisi (Partido de la Gente)\n- Ventajas: fuerte llegada digital y voto anti‑establishment; recordación alta por desempeño previo.\n- Desventajas: controversias legales y residencia fuera de Chile que dificultan campaña territorial; estructura partidaria irregular.\n\nNota: Las inscripciones oficiales ante el Servel y las alianzas pueden cambiar. Si quieres, te doy la lista oficial más reciente y un comparativo por temas (economía, seguridad, pensiones).",
+      "parentId": "node_1",
+      "timestamp": "2025-10-13T13:37:02.634Z",
+      "summary": "Evelyn Matthei (Chile Vamos–UDI): experiencia/gestión, perfil moderado, techo en segunda vuelta, tensiones con Republicanos., José Antonio Kast (Partido Republicano): base fiel/movilizada, seguridad/orden, rechazo en moderados, alianzas difíciles., Carolina Tohá (PPD/coalición oficialista): experiencia ejecutiva, articulación política",
+      "keywords": [
+        "Evelyn Matthei (Chile Vamos–UDI): experiencia/gestión",
+        "perfil moderado",
+        "techo en segunda vuelta",
+        "tensiones con Republicanos.",
+        "José Antonio Kast (Partido Republicano): base fiel/movilizada",
+        "seguridad/orden",
+        "rechazo en moderados",
+        "alianzas difíciles.",
+        "Carolina Tohá (PPD/coalición oficialista): experiencia ejecutiva",
+        "articulación política"
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_13",
+      "content": "Evelyn Matthei (Chile Vamos – UDI). Ventajas: alta experiencia y gestión bien evaluada; perfil moderado que puede captar voto de centro. Desventajas: asociación a la derecha tradicional y posibles tensiones con Republicanos; riesgo de “techo” en segunda vuelta.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T13:47:02.479Z",
+      "summary": "Matthei (Chile Vamos–UDI): Ventajas: experiencia, gestión bien evaluada, perfil moderado (centro). Desventajas: derecha tradicional, tensiones con Republicanos, posible techo en segunda vuelta.",
+      "keywords": [
+        "Matthei (Chile Vamos–UDI): Ventajas: experiencia",
+        "gestión bien evaluada",
+        "perfil moderado (centro). Desventajas: derecha tradicional",
+        "tensiones con Republicanos",
+        "posible techo en segunda vuelta."
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_14",
+      "content": "José Antonio Kast (Partido Republicano). Ventajas: base fiel y movilizada; mensaje claro en seguridad/orden; liderazgo opositor consolidado. Desventajas: alto rechazo en el electorado moderado; dificultades para tejer alianzas amplias.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T13:47:02.886Z",
+      "summary": "Ventajas: base fiel/movilizada, seguridad/orden, liderazgo opositor consolidado. Desventajas: rechazo moderado, dificultades para alianzas amplias.",
+      "keywords": [
+        "Ventajas: base fiel/movilizada",
+        "seguridad/orden",
+        "liderazgo opositor consolidado. Desventajas: rechazo moderado",
+        "dificultades para alianzas amplias."
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_15",
+      "content": "Carolina Tohá (PPD/coalición oficialista). Ventajas: amplia experiencia ejecutiva (Interior, alcaldía); capacidad de articulación política; perfil de centroizquierda moderado. Desventajas: desgaste por la situación de seguridad durante su gestión y por identificación con el gobierno en ejercicio.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T13:47:03.911Z",
+      "summary": "Ventajas: experiencia ejecutiva, articulación política, centroizquierda moderado. Desventajas: desgaste por seguridad, identificación con el gobierno en ejercicio.",
+      "keywords": [
+        "Ventajas: experiencia ejecutiva",
+        "articulación política",
+        "centroizquierda moderado. Desventajas: desgaste por seguridad",
+        "identificación con el gobierno en ejercicio."
+      ],
+      "sticker": ""
+    },
+    {
+      "id": "node_16",
+      "content": "Franco Parisi (Partido de la Gente). Ventajas: fuerte llegada digital y voto anti‑establishment; recordación alta por desempeño previo. Desventajas: controversias legales y residencia fuera de Chile que dificultan campaña territorial; estructura partidaria irregular.",
+      "parentId": "node_2",
+      "timestamp": "2025-10-13T13:47:04.229Z",
+      "summary": "Llegada digital fuerte, voto anti, establishment, recordación por desempeño, controversias legales, residencia fuera de Chile, campaña territorial dificultada, estructura partidaria irregular.",
+      "keywords": [
+        "Llegada digital fuerte",
+        "voto anti",
+        "establishment",
+        "recordación por desempeño",
+        "controversias legales",
+        "residencia fuera de Chile",
+        "campaña territorial dificultada",
+        "estructura partidaria irregular."
+      ],
+      "sticker": ""
+    }
+  ]
+}

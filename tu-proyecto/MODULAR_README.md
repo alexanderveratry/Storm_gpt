@@ -67,7 +67,7 @@ public/
 - Estados de vista (resumen/contenido)
 
 
-## 🔄 Migración Realizada
+## 🔄 modulos
 
 1. **✅ Extracción de constantes** → `constants.js`
 2. **✅ Separación de utilidades** → `utils.js`  
@@ -76,23 +76,4 @@ public/
 5. **✅ Separación de renderizado** → `treeRenderer.js`
 6. **✅ Gestión de UI independiente** → `uiManager.js`
 7. **✅ Splash screen modular** → `splashScreen.js`
-8. **✅ Nuevo punto de entrada** → `app.js` (modular)
-
-## 🎯 Próximos Pasos Sugeridos
-
-1. **🧪 Testing**: Crear tests unitarios para cada módulo
-2. **📖 Documentación**: JSDoc más detallado en cada módulo
-3. **🎛️ Configuración**: Externalizar más configuraciones
-4. **🔧 Build Process**: Considerar bundler (Webpack/Vite) para optimización
-5. **📱 Responsive**: Mejorar adaptabilidad móvil
-6. **♿ Accesibilidad**: Auditoría y mejoras de accesibilidad
-
-## 🚨 Notas Importantes
-
-- **Respaldo**: El archivo original se mantiene como `app_original.js`
-- **Compatibilidad**: La funcionalidad es exactamente la misma
-- **ES6 Modules**: Se usan imports/exports nativos del navegador
-- **No Breaking Changes**: La API externa (`window._ctree`) se mantiene
-
----
-
+8. **✅ Nuevo punto de entrada** → `app.js` 

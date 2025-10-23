@@ -56,7 +56,9 @@
                         <option value="gpt-5-nano" selected>GPT-5 Nano</option>
                         <option value="gpt-5-mini">GPT-5 Mini</option>
                         <option value="gpt-5">GPT-5</option>
+                        <option value="NOTAS">📝 NOTAS</option>
                     </select>
+                    <button type="button" id="rootBtn" class="root-btn" aria-label="Create root node">Raíz</button>
                     <button type="submit" id="sendBtn">Send</button>
                 </form>
 
@@ -78,6 +80,12 @@
                             <button type="button" id="viewStickerBtn" class="action-btn" aria-label="View sticker for this node" style="display: none;">
                                 👁️ Ver Sticker
                             </button>
+                            <button type="button" id="generateTreeBtn" class="action-btn" aria-label="Generate tree from this node">
+                                🌳 Generar Árbol
+                            </button>
+                            <button type="button" id="invokeAiFromNoteBtn" class="action-btn" aria-label="Invoke AI from this note" style="display: none;">
+                                🤖 Invocar IA desde Nota
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -89,6 +97,7 @@
                         <form id="chatMessageForm" class="chat-input-form" autocomplete="off">
                             <div class="chat-input-wrapper">
                                 <input id="chatMessageInput" name="chatMessage" type="text" placeholder="Continúa la conversación..." aria-required="true" />
+                                <button type="button" id="chatRootBtn" class="chat-root-btn" aria-label="Create root node">Raíz</button>
                                 <button type="submit" id="chatSendBtn" class="chat-send-btn">
                                     <span>→</span>
                                 </button>
